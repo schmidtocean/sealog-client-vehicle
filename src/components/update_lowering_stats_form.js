@@ -109,6 +109,7 @@ class UpdateLoweringStatsForm extends Component {
                       name="start"
                       component={renderDateTimePicker}
                       label={`${this.state.lowering_name} Start Date/Time (UTC)`}
+                      required={true}
                       timeFormat={timeFormat}
                       sm={11}
                       md={11}
@@ -120,7 +121,6 @@ class UpdateLoweringStatsForm extends Component {
                       name="off_deck"
                       component={renderDateTimePicker}
                       label="Off Deck Date/Time (UTC)"
-                      required={true}
                       timeFormat={timeFormat}
                       sm={11}
                       md={11}
