@@ -32,7 +32,6 @@ class UpdateLoweringStatsForm extends Component {
 
     let initialValues = {
       start: this.props.milestones.lowering_start,
-      off_deck: (this.props.milestones.lowering_off_deck) ? this.props.milestones.lowering_off_deck : null,
       descending: (this.props.milestones.lowering_descending) ? this.props.milestones.lowering_descending : null,
       on_bottom: (this.props.milestones.lowering_on_bottom) ? this.props.milestones.lowering_on_bottom : null,
       off_bottom: (this.props.milestones.lowering_off_bottom) ? this.props.milestones.lowering_off_bottom : null,
@@ -56,7 +55,6 @@ class UpdateLoweringStatsForm extends Component {
 
     let milestones = {
       lowering_start: (formProps.start._isAMomentObject) ? formProps.start.toISOString() : formProps.start,
-      lowering_off_deck: (formProps.off_deck && formProps.off_deck._isAMomentObject) ? formProps.off_deck.toISOString() : formProps.off_deck,
       lowering_descending: (formProps.descending && formProps.descending._isAMomentObject) ? formProps.descending.toISOString() : formProps.descending,
       lowering_on_bottom: (formProps.on_bottom && formProps.on_bottom._isAMomentObject) ? formProps.on_bottom.toISOString() : formProps.on_bottom,
       lowering_off_bottom: (formProps.on_bottom && formProps.off_bottom._isAMomentObject) ? formProps.off_bottom.toISOString() : formProps.off_bottom,
@@ -110,17 +108,6 @@ class UpdateLoweringStatsForm extends Component {
                       component={renderDateTimePicker}
                       label={`${this.state.lowering_name} Start Date/Time (UTC)`}
                       required={true}
-                      timeFormat={timeFormat}
-                      sm={11}
-                      md={11}
-                      lg={7}
-                    />
-                  </Form.Row>
-                  <Form.Row className="justify-content-sm-center">  
-                    <Field
-                      name="off_deck"
-                      component={renderDateTimePicker}
-                      label="Off Deck Date/Time (UTC)"
                       timeFormat={timeFormat}
                       sm={11}
                       md={11}
@@ -306,7 +293,7 @@ function validate(formProps) {
   }
 
   if(formProps.descending && formProps.descending !== '' && moment.utc(formProps.descending, dateFormat + " " + timeFormat).isBefore(moment.utc(formProps.start, dateFormat + " " + timeFormat))) {
-    errors.descending = 'Descending date must be after off_deck date';
+    errors.descending = 'Descending date must be after start date';
   }
 
   if (formProps.on_bottom && formProps.on_bottom !== '' && formProps.off_bottom && formProps.off_bottom !== '') {
