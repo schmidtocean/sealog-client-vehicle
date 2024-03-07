@@ -1,11 +1,19 @@
 const Pkg = require('../package.json');
 
 // Use https:// and wss:// for secure servers
-const API_ROOT_URL = (typeof window !== 'undefined') &&
-  `http://${window.location.hostname}:8100/sealog-server`;
-const WS_ROOT_URL = (typeof window !== 'undefined') &&
-  `ws://${window.location.hostname}:8100/ws`;
+
+// For clients running on the production (ship) or development environment
+const API_ROOT_URL = (typeof window !== 'undefined') && `http://${window.location.hostname}:8100/sealog-server`;
+const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.hostname}:8100/ws`;
   
+// For local development against the production environment
+// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.23.9.25:8100/sealog-server`;
+// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.23.9.25:8100/ws`;
+
+// For local development against the development environment
+// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.128.0.26:8100/sealog-server`;
+// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.128.0.26:8100/ws`;
+
 // Change this if not hosting the client at the webserver's document root i.e. '/sealog/'
 const ROOT_PATH = "/sealog-Sub/";
 
@@ -28,7 +36,7 @@ const MAIN_SCREEN_HEADER = "Welcome to Sealog";
 const MAIN_SCREEN_TXT = "Please select a cruise from the list below.  Once a cruise is selected please select a lowering from the list of lowerings associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a lowering will open the lowering information panel.  At the bottom of the cruise information panel there will be links for proceeding to the lowering replay section, the lowering review section and the lowering gallery section of Sealog. If at any time you wish to return to this page please click the \"Review Cruises/Lowerings\" text in upper navigation bar.";
 
 // Title displayed on the left side of the title bar
-const HEADER_TITLE = `Sealog - Subastian`;
+const HEADER_TITLE = `Sealog v${Pkg.version} - Subastian`;
 
 // Set default vessel
 const DEFAULT_VESSEL = "R/V Falkor (too)";
@@ -43,7 +51,7 @@ const USE_ACCESS_CONTROL = false;
 const DISABLE_EVENT_LOGGING = false;
 
 // Placeholder text displayed in CruiseID textfield "i.e. OXR20210101"
-const CRUISE_ID_PLACEHOLDER = "i.e. FKt210101";
+const CRUISE_ID_PLACEHOLDER = "i.e. FKt240101";
 
 // RegExp object to use when verifying CruiseID i.e. RegExp(/^OXR20[0-9]{2}[0-1][0-9][0-3][0-9]$/)
 const CRUISE_ID_REGEX = RegExp(/^FKt2[0-9][0-1][0-9][0-3][0-9]$/);
