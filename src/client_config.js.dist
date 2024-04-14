@@ -15,7 +15,7 @@ const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.h
 // const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.128.0.26:8100/ws`;
 
 // Change this if not hosting the client at the webserver's document root i.e. '/sealog/'
-const ROOT_PATH = "/sealog-Sub/";
+const ROOT_PATH = "/sealog-sub/";
 
 // Where the images are hosted on the webserver.
 const IMAGE_PATH = "/files/images";
