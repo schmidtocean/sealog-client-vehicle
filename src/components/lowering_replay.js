@@ -351,13 +351,13 @@ class LoweringReplay extends Component {
 
       let return_aux_data = aux_data.map((aux_data) => {
         const aux_data_points = aux_data.data_array.map((data, index) => {
-          return(<div key={`${aux_data.data_source}_data_point_${index}`}><span className="data-name">{data.data_name.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span> <span className="float-right" style={{wordWrap:'break-word'}} >{data.data_value} {data.data_uom}</span><br/></div>);
+          return(<div key={`${aux_data.data_source}_data_point_${index}`}><span className="data-name">{data.data_name.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}:</span> <span className="float-right" style={{wordWrap:'break-word'}} >{data.data_value} {data.data_uom}</span><br/></div>);
         });
 
         return (
           <Col className="px-1 pb-2" key={`${aux_data.data_source}_col`} sm={6} md={4} lg={3}>
             <Card className="event-data-card" key={`${aux_data.data_source}`}>
-              <Card.Header>{aux_data.data_source.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</Card.Header>
+              <Card.Header>{aux_data.data_source.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}</Card.Header>
               <Card.Body>
                 {aux_data_points}
               </Card.Body>
