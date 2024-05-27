@@ -100,6 +100,14 @@
   }
 }
 
+@media (min-width: 1200px) {
+  .modal-lg,
+  .modal-xl {
+    max-width: 1920px;
+    padding: 1rem;
+  }
+}
+
 // react-datetime styles
 @import "~react-datetime/css/react-datetime.css";
 
