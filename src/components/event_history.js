@@ -314,7 +314,7 @@ class EventHistory extends Component {
   renderImage(source, filepath) {
     return (
       <Card className="event-image-data-card" id={`image_${source}`}>
-          <Image fluid onError={handleMissingImage} src={filepath} onClick={ () => this.handleImagePreviewModal(source, filepath)} />
+          <Image fluid onError={handleMissingImage} src={filepath} className="pseudo-link" onClick={ () => this.handleImagePreviewModal(source, filepath)} />
           <span>{source}</span>
       </Card>
     )
