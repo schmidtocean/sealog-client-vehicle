@@ -80,6 +80,10 @@
   text-transform: capitalize;
 }
 
+.pseudo-link {
+  cursor: pointer;
+  }
+
 // Utility class to hide arrow from dropdown
 .dropdown.no-arrow {
   .dropdown-toggle::after {
