@@ -8,7 +8,7 @@ const LoweringModeDropdownToggle = React.forwardRef(
 
     return (
       <span
-        className="text-primary dropdown-toggle"
+        className="text-primary dropdown-toggle pseudo-link"
         ref={ref}
         onClick={e => {
           e.preventDefault();
