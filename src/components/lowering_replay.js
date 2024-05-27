@@ -469,7 +469,7 @@ class LoweringReplay extends Component {
           let commentTooltip = (comment_exists)? (<OverlayTrigger placement="left" overlay={<Tooltip id={`commentTooltip_${event.id}`}>Edit/View Comment</Tooltip>}>{commentIcon}</OverlayTrigger>) : (<OverlayTrigger placement="top" overlay={<Tooltip id={`commentTooltip_${event.id}`}>Add Comment</Tooltip>}>{commentIcon}</OverlayTrigger>);
           let eventComment = (this.props.roles.includes("event_logger") || this.props.roles.includes("admin"))? commentTooltip : null;
 
-          return (<ListGroup.Item className="event-list-item py-1" key={event.id} active={active} ><span onClick={() => this.handleEventClick(index)} >{`${event.ts} <${event.event_author}>: ${event.event_value} ${eventOptions}`}</span><span className="float-right">{eventComment}</span></ListGroup.Item>);
+          return (<ListGroup.Item className="event-list-item py-1" key={event.id} active={active} ><span className="flex-grow-1 pseudo-link" onClick={() => this.handleEventClick(index)} >{`${event.ts} <${event.event_author}>: ${event.event_value} ${eventOptions}`}</span><span className="float-right">{eventComment}</span></ListGroup.Item>);
 
         }
       });
@@ -501,7 +501,7 @@ class LoweringReplay extends Component {
         <EventCommentModal />
         <Row>
           <ButtonToolbar className="mb-2 ml-1 align-items-center">
-            <span onClick={() => this.props.gotoCruiseMenu()} className="text-warning">{cruise_id}</span>
+            <span onClick={() => this.props.gotoCruiseMenu()} className="text-warning pseudo-link">{cruise_id}</span>
             <FontAwesomeIcon icon="chevron-right" fixedWidth/>
             <LoweringDropdown onClick={this.handleLoweringSelect} active_cruise={this.props.cruise} active_lowering={this.props.lowering}/>
             <FontAwesomeIcon icon="chevron-right" fixedWidth/>

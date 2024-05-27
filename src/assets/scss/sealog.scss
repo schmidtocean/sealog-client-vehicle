@@ -45,6 +45,10 @@
   font-size: .75rem;
 }
 
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
 .eventList {
   overflow-y: scroll;
   font-size: .8rem;
@@ -52,6 +56,11 @@
   &:focus { outline: none; }
 
   &.collapsed { height: 220px; }
+}
+
+.event-list-item {
+  display: flex;
+  justify-content: space-between;
 }
 
 .event-data-card {
