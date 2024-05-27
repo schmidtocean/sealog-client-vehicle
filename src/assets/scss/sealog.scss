@@ -101,7 +101,13 @@
 }
 
 @media (min-width: 1200px) {
-  .modal-lg,
+  .modal-lg {
+    max-width: 1200px;
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
   .modal-xl {
     max-width: 1920px;
     padding: 1rem;
