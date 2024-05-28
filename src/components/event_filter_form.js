@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { reduxForm, Field } from 'redux-form';
 import moment from 'moment';
-import { Button, Card, Form } from 'react-bootstrap';
+import { Button, Card, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { renderDateTimePicker, renderTextField } from './form_elements';
 import * as mapDispatchToProps from '../actions';
 
@@ -96,15 +96,37 @@ class EventFilterForm extends Component {
         <Card.Header>{eventFilterFormHeader}</Card.Header>
         <Card.Body className="px-0">
           <Form onSubmit={ handleSubmit(this.handleFormSubmit.bind(this)) }>
-            <Field
-              name="value"
-              component={renderTextField}
-              label="Event Value"
-              placeholder="i.e. SAMPLE"
-              disabled={this.props.disabled}
-              lg={12}
-              sm={12}
-            />
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Filters events based on the free-text field<br />Does not search all fields</Tooltip>}
+            >
+              <div>
+                <Field
+                  name="freetext"
+                  component={renderTextField}
+                  label="Freeform Text"
+                  disabled={this.props.disabled}
+                  lg={12}
+                  sm={12}
+                />
+              </div>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Filters on event value field</Tooltip>}
+            >
+              <div>
+                <Field
+                  name="value"
+                  component={renderTextField}
+                  label="Event Value"
+                  placeholder="i.e. SAMPLE"
+                  disabled={this.props.disabled}
+                  lg={12}
+                  sm={12}
+                />
+              </div>
+            </OverlayTrigger>
             <Field
               name="author"
               component={renderTextField}
@@ -130,14 +152,6 @@ class EventFilterForm extends Component {
               defaultValue={stopTS}
               timeFormat={timeFormat}
               label="Stop Date/Time (UTC)"
-              disabled={this.props.disabled}
-              lg={12}
-              sm={12}
-            />
-            <Field
-              name="freetext"
-              component={renderTextField}
-              label="Freeform Text"
               disabled={this.props.disabled}
               lg={12}
               sm={12}

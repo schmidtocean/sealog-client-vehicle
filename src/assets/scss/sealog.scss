@@ -45,6 +45,10 @@
   font-size: .75rem;
 }
 
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
 .eventList {
   overflow-y: scroll;
   font-size: .8rem;
@@ -52,6 +56,11 @@
   &:focus { outline: none; }
 
   &.collapsed { height: 220px; }
+}
+
+.event-list-item {
+  display: flex;
+  justify-content: space-between;
 }
 
 .event-data-card {
@@ -80,10 +89,28 @@
   text-transform: capitalize;
 }
 
+.pseudo-link {
+  cursor: pointer;
+  }
+
 // Utility class to hide arrow from dropdown
 .dropdown.no-arrow {
   .dropdown-toggle::after {
     display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .modal-lg {
+    max-width: 1200px;
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .modal-xl {
+    max-width: 1920px;
+    padding: 1rem;
   }
 }
 
