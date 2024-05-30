@@ -224,7 +224,7 @@ class LoweringReview extends Component {
 
           let eventDetails = <OverlayTrigger placement="left" overlay={<Tooltip id={`commentTooltip_${event.id}`}>View Details</Tooltip>}><FontAwesomeIcon onClick={() => this.handleEventShowDetailsModal(event)} icon='window-maximize' fixedWidth/></OverlayTrigger>;
 
-          return (<ListGroup.Item className="py-1 event-list-item" key={event.id} active={active} ><span className="flex-grow-1 pseudo-link" onClick={() => this.handleEventClick(event)} >{`${event.ts} <${event.event_author}>: ${event.event_value} ${eventOptions}`}</span><span className="float-right">{eventDetails} {eventComment}</span></ListGroup.Item>);
+          return (<ListGroup.Item className="py-1 event-list-item" key={event.id} active={active} ><span className="flex-grow-1 pseudo-link" onClick={() => this.handleEventClick(event)} >{`${event.ts} <${event.event_author}>: ${event.event_value} ${eventOptions}`}</span><span className="float-right flex-none">{eventDetails} {eventComment}</span></ListGroup.Item>);
 
         }
       });

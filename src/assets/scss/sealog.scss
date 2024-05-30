@@ -47,10 +47,15 @@
 
 .flex-grow-1 {
   flex-grow: 1;
+  overflow: auto;
+}
+
+.flex-none {
+  flex: none;
 }
 
 .eventList {
-  overflow-y: scroll;
+  overflow-y: auto;
   font-size: .8rem;
 
   &:focus { outline: none; }

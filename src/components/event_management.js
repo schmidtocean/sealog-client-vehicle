@@ -203,7 +203,7 @@ class EventManagement extends Component {
         let deleteIcon = <FontAwesomeIcon className={"text-danger"} onClick={() => this.handleEventDeleteModal(event)} icon='trash' fixedWidth/>;
         let deleteTooltip = (this.props.roles && this.props.roles.includes("admin"))? (<OverlayTrigger placement="top" overlay={<Tooltip id={`deleteTooltip_${event.id}`}>Delete this event</Tooltip>}>{deleteIcon}</OverlayTrigger>): null;
 
-        return (<ListGroup.Item className="event-list-item py-1" key={event.id}><span onClick={() => this.handleEventShowDetailsModal(event)}>{event.ts} {`<${event.event_author}>`}: {event.event_value} {eventOptions}</span><span className="float-right">{deleteTooltip} {commentTooltip}</span></ListGroup.Item>);
+        return (<ListGroup.Item className="event-list-item py-1" key={event.id}><span className="flex-grow-1 pseudo-link" onClick={() => this.handleEventShowDetailsModal(event)}>{event.ts} {`<${event.event_author}>`}: {event.event_value} {eventOptions}</span><span className="float-right flex-none">{deleteTooltip} {commentTooltip}</span></ListGroup.Item>);
       });
 
       return eventList;
