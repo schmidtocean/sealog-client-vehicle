@@ -31,6 +31,10 @@ class CreateEventTemplate extends Component {
     if(typeof formProps.disabled === 'undefined'){
       formProps.disabled = false;
     }
+    
+    if(typeof formProps.is_power_logger === 'undefined'){
+      formProps.is_power_logger = false;
+    }
 
     if(formProps.template_categories) {
       formProps.template_categories = formProps.template_categories.split(',');
@@ -204,6 +208,7 @@ class CreateEventTemplate extends Component {
       return (
         <div>
           {this.renderSystemEventTemplateOption()}
+          {this.renderPowerLoggerOnlyOption()}
           {this.renderDisableTemplateOption()}
         </div>
       );
@@ -217,6 +222,18 @@ class CreateEventTemplate extends Component {
         name='system_template'
         component={renderSwitch}
         label="System Template"
+        lg={12}
+        sm={12}
+      />
+    );
+  }
+
+  renderPowerLoggerOnlyOption() {
+    return (
+      <Field
+        name="is_power_logger"
+        component={renderSwitch}
+        label="Power Logger Only"
         lg={12}
         sm={12}
       />

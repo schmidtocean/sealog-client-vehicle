@@ -526,6 +526,7 @@ export function createEventTemplate(formProps) {
   fields.event_value = formProps.event_value;
   fields.system_template = formProps.system_template;
   fields.disabled = formProps.disabled;
+  fields.is_power_logger = formProps.is_power_logger;
   fields.template_categories = formProps.template_categories;
 
   if(!formProps.event_free_text_required) {
@@ -854,6 +855,12 @@ export function updateEventTemplate(formProps) {
     fields.disabled = false;
   }
 
+  if(typeof formProps.is_power_logger !== 'undefined') {
+    fields.is_power_logger = formProps.is_power_logger;
+  }
+  else {
+    fields.is_power_logger = false;
+  }
 
   if(!formProps.event_options) {
     fields.event_options = [];
