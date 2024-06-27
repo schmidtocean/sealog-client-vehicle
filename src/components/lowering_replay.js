@@ -452,7 +452,7 @@ class LoweringReplay extends Component {
             if(option.event_option_name === 'event_comment') {
               comment_exists = (option.event_option_value !== '')? true : false;
             } else {
-              filtered.push(`${option.event_option_name.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}: "${option.event_option_value}"`);
+              filtered.push(`${option.event_option_name.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}: "${option.event_option_value}"`);
             }
             return filtered;
           },[]);
