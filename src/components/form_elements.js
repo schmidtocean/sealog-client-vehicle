@@ -105,9 +105,8 @@ export function renderCheckboxGroup({ label, options, input, required, meta: { d
   const checkboxList = options.map((option, index) => {
     const tooltip = (option.description)? (<Tooltip id={`${input.name}_${option.value}_Tooltip`}>{option.description}</Tooltip>) : null;
 
-    
     const checkbox = <Form.Check
-      label={(indication && input.value.includes(option.value)) ? <span className="text-warning">{option.value}</span> : option.value }
+      label={(indication && input.value.includes(option.value)) ? <span className="text-warning pseudo-link">{option.value}</span> : <span className="pseudo-link">{option.value}</span> }
       name={`${input.name}[${index}]`}
       id={`${input.name}_${option.value}`}
       key={`${input.name}_${option.value}`}
@@ -157,16 +156,14 @@ export function renderCheckbox({ input, label, meta: { dirty, error }, disabled=
   );
 }
 
-
 export function renderRadioGroup({ label, options, input, required, meta: { dirty, error }, disabled=false, inline=false, indication=false }) {
 
   const requiredField = (required)? (<span className='text-danger'> *</span>) : '';
   const radioList = options.map((option, index) => {
     const tooltip = (option.description)? (<Tooltip id={`${input.name}_${option.value}_Tooltip`}>{option.description}</Tooltip>) : null;
 
-    
     const radio = <Form.Check
-      label={(indication && input.value === option.value) ? <span className="text-warning">{option.value}</span> : option.value }
+      label={(indication && input.value === option.value) ? <span className="text-warning pseudo-link">{option.value}</span> : <span className="pseudo-link">{option.value}</span> }
       name={`${input.name}`}
       id={`${input.name}_${option.value}`}
       key={`${input.name}_${option.value}`}
