@@ -1,0 +1,77 @@
+name: Sealog Client Dev CI
+
+on:
+  push:
+    branches:
+      - dev-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Debug Runner Info
+      run: |
+        echo "Runner name: ${{ runner.name }}"
+        echo "Runner OS: ${{ runner.os }}"
+        echo "Runner arch: ${{ runner.arch }}"
+        echo "Workflow name: ${{ github.workflow }}"
+        echo "Event name: ${{ github.event_name }}"
+        echo "Branch name: ${{ github.ref }}"
+        echo "GitHub workspace: ${{ github.workspace }}"
+        echo "Current directory: $(pwd)"
+        ls -la
+
+    - name: Navigate to project directory
+      run: |
+        cd /opt/sealog-client-Sub || exit 1
+        echo "Current directory: $(pwd)"
+        ls -la
+
+    - name: Update repository
+      working-directory: /opt/sealog-client-Sub
+      run: |
+        git fetch origin
+        git checkout dev-ci
+        git pull origin dev-ci
+
+    - name: Install dependencies
+      working-directory: /opt/sealog-client-Sub
+      run: npm ci
+
+    - name: Build project
+      working-directory: /opt/sealog-client-Sub
+      run: npm run build
+      
+    - name: Error logging
+      if: failure()
+      working-directory: /opt/sealog-client-Sub
+      run: |
+        echo "Job failed. Logging additional information:"
+        echo "Node version: $(node -v)"
+        echo "NPM version: $(npm -v)"
+        echo "Git version: $(git --version)"
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        echo "Git status:"
+        git status
+        echo "Git log (last 5 commits):"
+        git log -n 5 --oneline
+
+    - name: Success logging
+      if: success()
+      working-directory: /opt/sealog-client-Sub
+      run: |
+        echo "Build completed successfully!"
+        echo "Node version: $(node -v)"
+        echo "NPM version: $(npm -v)"
+        echo "Git version: $(git --version)"
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -lah
+        echo "Git status:"
+        git status
+        echo "Git log (last 5 commits):"
+        git log -n 5 --oneline
