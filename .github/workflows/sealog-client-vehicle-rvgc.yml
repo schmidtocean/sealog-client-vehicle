@@ -1,4 +1,4 @@
-name: Sealog Client Vehicle
+name: Sealog Client Vehicle 
 
 on:
   push:
