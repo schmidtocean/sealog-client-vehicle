@@ -23,12 +23,6 @@ jobs:
         echo "Current directory: $(pwd)"
         ls -la
 
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        path: ${{ github.workspace }}
-
     - name: Navigate to project directory and update
       run: |
         cd ${{ github.workspace }}
