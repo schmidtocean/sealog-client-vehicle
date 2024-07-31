@@ -3,7 +3,7 @@ name: Sealog Client Dev CI
 on:
   push:
     branches:
-      - dev-ci
+      - '*'
   workflow_dispatch:
 
 jobs:
@@ -23,30 +23,32 @@ jobs:
         echo "Current directory: $(pwd)"
         ls -la
 
-    - name: Navigate to project directory
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        path: ${{ github.workspace }}/sealog-client-Sub
+
+    - name: Navigate to project directory and update
       run: |
-        cd /opt/sealog-client-Sub || exit 1
+        cd ${{ github.workspace }}/sealog-client-Sub
+        git fetch --all
+        git checkout ${{ github.ref_name }}
+        git pull origin ${{ github.ref_name }}
         echo "Current directory: $(pwd)"
         ls -la
 
-    - name: Update repository
-      working-directory: /opt/sealog-client-Sub
-      run: |
-        git fetch origin
-        git checkout dev-ci
-        git pull origin dev-ci
-
     - name: Install dependencies
-      working-directory: /opt/sealog-client-Sub
+      working-directory: ${{ github.workspace }}/sealog-client-Sub
       run: npm ci
 
     - name: Build project
-      working-directory: /opt/sealog-client-Sub
+      working-directory: ${{ github.workspace }}/sealog-client-Sub
       run: npm run build
       
     - name: Error logging
       if: failure()
-      working-directory: /opt/sealog-client-Sub
+      working-directory: ${{ github.workspace }}/sealog-client-Sub
       run: |
         echo "Job failed. Logging additional information:"
         echo "Node version: $(node -v)"
@@ -62,7 +64,7 @@ jobs:
 
     - name: Success logging
       if: success()
-      working-directory: /opt/sealog-client-Sub
+      working-directory: ${{ github.workspace }}/sealog-client-Sub
       run: |
         echo "Build completed successfully!"
         echo "Node version: $(node -v)"
