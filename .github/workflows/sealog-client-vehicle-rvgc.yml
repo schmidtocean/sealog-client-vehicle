@@ -23,6 +23,20 @@ jobs:
         echo "Current directory: $(pwd)"
         ls -la
 
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        clean: false  # This prevents deletion of untracked files
+        fetch-depth: 0  # Fetch all history for all branches and tags
+
+    - name: Verify checkout
+      run: |
+        echo "Current directory after checkout: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Git status:"
+        git status
+
     - name: Navigate to project directory and update
       run: |
         git fetch --all
