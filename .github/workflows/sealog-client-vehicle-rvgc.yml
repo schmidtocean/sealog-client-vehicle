@@ -40,7 +40,13 @@ jobs:
 
     - name: Install dependencies
       working-directory: ${{ github.workspace }}/sealog-client-Sub
-      run: npm ci
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          echo "package-lock.json not found, falling back to npm install"
+          npm install
+        fi
 
     - name: Build project
       working-directory: ${{ github.workspace }}/sealog-client-Sub
