@@ -1,4 +1,4 @@
-name: Sealog Client Dev CI
+name: Sealog Client Vehicle
 
 on:
   push:
