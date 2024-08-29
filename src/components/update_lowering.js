@@ -189,6 +189,8 @@ class UpdateLowering extends Component {
                 ref={ref => this.pond = ref}
                 allowMultiple={true} 
                 maxFiles={5} 
+                chunkUploads={true}
+                chunkSize={5000000}
                 server={{
                   url: API_ROOT_URL,
                   process: {
