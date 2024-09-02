@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { connect } from 'react-redux';
 import { Button, ListGroup, Image, Card, Tooltip, OverlayTrigger, Row, Col, Form, FormControl } from 'react-bootstrap';
 import ImagePreviewModal from './image_preview_modal';
+import CoordinateFormatCycler from './coord_format_cycler';
 import * as mapDispatchToProps from '../actions';
 import { Client } from '@hapi/nes/lib/client';
 import axios from 'axios';
@@ -383,7 +384,24 @@ class EventHistory extends Component {
 
       let return_aux_data = aux_data.map((aux_data) => {
         const aux_data_points = aux_data.data_array.map((data, index) => {
-          return(<div key={`${aux_data.data_source}_data_point_${index}`}><span className="data-name">{data.data_name.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}:</span> <span className="float-right" style={{wordWrap:'break-word'}} >{data.data_value} {data.data_uom}</span><br/></div>);
+          if (data.data_name === 'latitude' || data.data_name === 'longitude') {
+            return (
+              <CoordinateFormatCycler
+                key={`${aux_data.data_source}_data_point_${index}`}
+                coordinate={data.data_name}
+                name={data.data_name}
+                value={data.data_value}
+                uom={data.data_uom}
+              />
+            );
+          }
+          return (
+            <div key={`${aux_data.data_source}_data_point_${index}`}>
+              <span className="data-name">{data.data_name.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span>
+              <span className="float-right" style={{wordWrap:'break-word'}}>{data.data_value} {data.data_uom}</span>
+              <br/>
+            </div>
+          );
         });
 
         return (
