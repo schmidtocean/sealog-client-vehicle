@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 import { Pagination } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
 
 class CustomPagination extends Component {
-
-  constructor (props) {
+  constructor(props) {
     super(props);
-
     this.state = {
-      maxPerPage: (this.props.maxPerPage)? this.props.maxPerPage : 10
+      maxPerPage: this.props.maxPerPage || 10
     };
   }
 
@@ -22,27 +19,26 @@ class CustomPagination extends Component {
   };
 
   componentDidUpdate(prevProps) {
-
-    if(prevProps.maxPerPage !== this.props.maxPerPage) {
-      this.setState({maxPerPage: this.props.maxPerPage})
-    }  
+    if (prevProps.maxPerPage !== this.props.maxPerPage) {
+      this.setState({ maxPerPage: this.props.maxPerPage });
+    }
   }
 
   render() {
+    const { page, count, pageSelectFunc, className } = this.props;
+    const { maxPerPage } = this.state;
+    const totalPages = Math.ceil(count / maxPerPage);
+    const delta = 2; // Show pages within a delta of 2 from the current page
 
-    const count = (this.props.count)? this.props.count : 0;
-
-    if(count > this.state.maxPerPage) {
-      let last = Math.ceil(count/this.state.maxPerPage);
-      let delta = 2;
-      let left = this.props.page - delta;
-      let right = this.props.page + delta + 1;
+    if (count > maxPerPage) {
+      let left = page - delta;
+      let right = page + delta;
       let range = [];
       let rangeWithDots = [];
       let l = null;
 
-      for (let i = 1; i <= last; i++) {
-        if (i === 1 || i === last || i >= left && i < right) {
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= left && i <= right)) {
           range.push(i);
         }
       }
@@ -50,31 +46,36 @@ class CustomPagination extends Component {
       for (let i of range) {
         if (l) {
           if (i - l === 2) {
-            rangeWithDots.push(<Pagination.Item key={l + 1} active={(this.props.page === l+1)} onClick={() => this.props.pageSelectFunc(l + 1)}>{l + 1}</Pagination.Item>);
+            rangeWithDots.push(
+              <Pagination.Item key={l + 1} active={page === l + 1} onClick={() => pageSelectFunc(l + 1)}>
+                {l + 1}
+              </Pagination.Item>
+            );
           } else if (i - l !== 1) {
             rangeWithDots.push(<Pagination.Ellipsis key={`ellipsis_${i}`} />);
           }
         }
-        rangeWithDots.push(<Pagination.Item key={i} active={(this.props.page === i)} onClick={() => this.props.pageSelectFunc(i)}>{i}</Pagination.Item>);
+        rangeWithDots.push(
+          <Pagination.Item key={i} active={page === i} onClick={() => pageSelectFunc(i)}>
+            {i}
+          </Pagination.Item>
+        );
         l = i;
       }
 
       return (
-        <Pagination className={this.props.className} >
-          <Pagination.First className={"rounded-left "} onClick={() => this.props.pageSelectFunc(1)} />
-          <Pagination.Prev onClick={() => { if(this.props.page > 1) { this.props.pageSelectFunc(this.props.page-1)}}} />
+        <Pagination className={className}>
+          <Pagination.First onClick={() => pageSelectFunc(1)} />
+          <Pagination.Prev onClick={() => page > 1 && pageSelectFunc(page - 1)} />
           {rangeWithDots}
-          <Pagination.Next onClick={() => { if(this.props.page < last) { this.props.pageSelectFunc(this.props.page+1)}}} />
-          <Pagination.Last className={"rounded-right "} onClick={() => this.props.pageSelectFunc(last)} />
+          <Pagination.Next onClick={() => page < totalPages && pageSelectFunc(page + 1)} />
+          <Pagination.Last onClick={() => pageSelectFunc(totalPages)} />
         </Pagination>
       );
     }
+
     return null;
   }
 }
 
-// function mapStateToProps(state) {
-//   return {};
-// }
-
-export default connect(null, null)(CustomPagination);
+export default CustomPagination;
