@@ -1,13 +1,18 @@
 import React, { Component } from 'react';
 import { Pagination } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import debounce from 'lodash/debounce';
 
 class CustomPagination extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      maxPerPage: this.props.maxPerPage || 10
+      maxPerPage: this.props.maxPerPage || 10,
+      currentPage: this.props.page
     };
+    
+    // Debounce the pageSelectFunc with a smaller delay
+    this.debouncedPageSelect = debounce(this.props.pageSelectFunc, 100);
   }
 
   static propTypes = {
@@ -22,17 +27,35 @@ class CustomPagination extends Component {
     if (prevProps.maxPerPage !== this.props.maxPerPage) {
       this.setState({ maxPerPage: this.props.maxPerPage });
     }
+    
+    if (prevProps.page !== this.props.page) {
+      this.setState({ currentPage: this.props.page });
+    }
+    
+    if (prevProps.pageSelectFunc !== this.props.pageSelectFunc) {
+      this.debouncedPageSelect = debounce(this.props.pageSelectFunc, 100);
+    }
+  }
+
+  componentWillUnmount() {
+    this.debouncedPageSelect.cancel();
+  }
+
+  handlePageSelect = (pageNumber) => {
+    this.setState({ currentPage: pageNumber }, () => {
+      this.debouncedPageSelect(pageNumber);
+    });
   }
 
   render() {
-    const { page, count, pageSelectFunc, className } = this.props;
-    const { maxPerPage } = this.state;
+    const { count, className } = this.props;
+    const { maxPerPage, currentPage } = this.state;
     const totalPages = Math.ceil(count / maxPerPage);
     const delta = 2; // Show pages within a delta of 2 from the current page
 
     if (count > maxPerPage) {
-      let left = page - delta;
-      let right = page + delta;
+      let left = currentPage - delta;
+      let right = currentPage + delta;
       let range = [];
       let rangeWithDots = [];
       let l = null;
@@ -47,7 +70,11 @@ class CustomPagination extends Component {
         if (l) {
           if (i - l === 2) {
             rangeWithDots.push(
-              <Pagination.Item key={l + 1} active={page === l + 1} onClick={() => pageSelectFunc(l + 1)}>
+              <Pagination.Item 
+                key={l + 1} 
+                active={currentPage === l + 1} 
+                onClick={() => this.handlePageSelect(l + 1)}
+              >
                 {l + 1}
               </Pagination.Item>
             );
@@ -56,7 +83,11 @@ class CustomPagination extends Component {
           }
         }
         rangeWithDots.push(
-          <Pagination.Item key={i} active={page === i} onClick={() => pageSelectFunc(i)}>
+          <Pagination.Item 
+            key={i} 
+            active={currentPage === i} 
+            onClick={() => this.handlePageSelect(i)}
+          >
             {i}
           </Pagination.Item>
         );
@@ -65,11 +96,11 @@ class CustomPagination extends Component {
 
       return (
         <Pagination className={className}>
-          <Pagination.First onClick={() => pageSelectFunc(1)} />
-          <Pagination.Prev onClick={() => page > 1 && pageSelectFunc(page - 1)} />
+          <Pagination.First onClick={() => this.handlePageSelect(1)} />
+          <Pagination.Prev onClick={() => currentPage > 1 && this.handlePageSelect(currentPage - 1)} />
           {rangeWithDots}
-          <Pagination.Next onClick={() => page < totalPages && pageSelectFunc(page + 1)} />
-          <Pagination.Last onClick={() => pageSelectFunc(totalPages)} />
+          <Pagination.Next onClick={() => currentPage < totalPages && this.handlePageSelect(currentPage + 1)} />
+          <Pagination.Last onClick={() => this.handlePageSelect(totalPages)} />
         </Pagination>
       );
     }
