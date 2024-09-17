@@ -84,7 +84,7 @@ class LoweringGalleryTab extends Component {
     const gcsFilepath = getImageUrl(this.props.cruise.cruise_id, this.props.lowering.lowering_id, filepath);
     return (
       <Card className="event-image-data-card" id={`image_${source}`}>
-        <Image fluid onClick={ () => this.handleEventShowDetailsModal(event_id) } onError={handleMissingImage} src={gcsFilepath}/>
+        <Image fluid onClick={ () => this.handleEventShowDetailsModal(event_id) } onError={handleMissingImage} src={filepath}/>
       </Card>
     )
   }
