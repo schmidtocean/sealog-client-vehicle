@@ -86,8 +86,8 @@ class ResetPassword extends Component {
 
       return (
         <Card className='form-signin'>
+          <Card.Header>Reset Password</Card.Header>
           <Card.Body>
-            <h5 className='form-signin-heading'>Reset Password</h5>
             <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
               <Row>
                 <Field name='password' component={renderTextField} type='password' placeholder='Password' required={true} />

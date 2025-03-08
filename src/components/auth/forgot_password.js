@@ -76,8 +76,8 @@ class ForgotPassword extends Component {
 
       return (
         <Card>
+          <Card.Header className='form-signin'>Forgot Password</Card.Header>
           <Card.Body>
-            <h5 className='form-signin-heading'>Forgot Password</h5>
             <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
               <Row>
                 <Field name='email' component={renderTextField} placeholder='Email Address' />

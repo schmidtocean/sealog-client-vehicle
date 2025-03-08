@@ -101,8 +101,8 @@ class Login extends Component {
     return (
       <Container>
         <Row className='pt-4 justify-content-center'>
-          <Col sm={8} md={6} lg={4} xl={4}>
-            <Card className='mb-4'>
+          <Col sm={7} md={5} lg={4} xl={4}>
+            <Card className='me-0'>
               <Card.Body>
                 <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
                   <p>Please login to your account</p>
@@ -125,7 +125,7 @@ class Login extends Component {
                     Forgot Password?
                   </Link>
                   <div className='pt-3'>
-                    Don`&apos;`t have an account?
+                    Don&apos;t have an account?
                     <Link className='btn btn-sm btn-outline-primary ms-2' to={'/register'}>
                       Register
                     </Link>
