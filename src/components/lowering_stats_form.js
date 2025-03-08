@@ -80,6 +80,7 @@ class LoweringStatsForm extends Component {
                 required={true}
                 timeFormat={timeFormat}
                 lg={8}
+                className='field-stats'
               />
               {MILESTONES.map((milestone) => {
                 return (
@@ -90,6 +91,7 @@ class LoweringStatsForm extends Component {
                     label={milestone.label}
                     timeFormat={timeFormat}
                     lg={8}
+                    className='field-stats'
                   />
                 )
               })}
@@ -101,6 +103,7 @@ class LoweringStatsForm extends Component {
                 required={true}
                 timeFormat={timeFormat}
                 lg={8}
+                className='field-stats'
               />
               <Field
                 name={'milestones.' + ABORT_MILESTONE.name}
@@ -108,34 +111,75 @@ class LoweringStatsForm extends Component {
                 label={ABORT_MILESTONE.label}
                 timeFormat={timeFormat}
                 lg={8}
+                className='field-stats'
               />
             </Col>
             <Col sm={6}>
               <div>
                 <strong style={{ fontSize: 'large' }}>Stats</strong>
               </div>
-              <Form.Row className='justify-content-sm-center'>
-                <Field name='stats.max_depth' component={renderTextField} label='Max Depth' placeholder='in meters' lg={5} md={6} />
-              </Form.Row>
-              <Form.Row className='justify-content-sm-center'>
-                <Field name='stats.bounding_box.bbox_north' component={renderTextField} label='North' placeholder='in ddeg' lg={5} md={6} />
-              </Form.Row>
-              <Form.Row className='justify-content-sm-center'>
-                <Field name='stats.bounding_box.bbox_west' component={renderTextField} label='West' placeholder='in ddeg' lg={5} md={6} />
-                <Field name='stats.bounding_box.bbox_east' component={renderTextField} label='East' placeholder='in ddeg' lg={5} md={6} />
-              </Form.Row>
-              <Form.Row className='justify-content-sm-center'>
-                <Field name='stats.bounding_box.bbox_south' component={renderTextField} label='South' placeholder='in ddeg' lg={5} md={6} />
-              </Form.Row>
+              <Row className='justify-content-sm-center'>
+                <Field
+                  name='stats.max_depth'
+                  component={renderTextField}
+                  label='Max Depth'
+                  placeholder='in meters'
+                  lg={5}
+                  md={6}
+                  className='field-stats'
+                />
+              </Row>
+              <Row className='justify-content-sm-center'>
+                <Field
+                  name='stats.bounding_box.bbox_north'
+                  component={renderTextField}
+                  label='North'
+                  placeholder='in ddeg'
+                  lg={5}
+                  md={6}
+                  className='field-stats'
+                />
+              </Row>
+              <Row className='justify-content-sm-center'>
+                <Field
+                  name='stats.bounding_box.bbox_west'
+                  component={renderTextField}
+                  label='West'
+                  placeholder='in ddeg'
+                  lg={5}
+                  md={6}
+                  className='field-stats'
+                />
+                <Field
+                  name='stats.bounding_box.bbox_east'
+                  component={renderTextField}
+                  label='East'
+                  placeholder='in ddeg'
+                  lg={5}
+                  md={6}
+                  className='field-stats'
+                />
+              </Row>
+              <Row className='justify-content-sm-center'>
+                <Field
+                  name='stats.bounding_box.bbox_south'
+                  component={renderTextField}
+                  label='South'
+                  placeholder='in ddeg'
+                  lg={5}
+                  md={6}
+                  className='field-stats'
+                />
+              </Row>
             </Col>
           </Row>
           <Row>
             <Col xs={12}>
-              <div className='float-right'>
-                <Button className='mr-1' variant='secondary' size='sm' onClick={this.props.handleHide}>
+              <div className='float-end'>
+                <Button className='me-1' variant='outline-secondary' size='sm' onClick={this.props.handleHide}>
                   Cancel
                 </Button>
-                <Button variant='warning' size='sm' type='submit' disabled={pristine || submitting || !valid}>
+                <Button variant='outline-primary' size='sm' type='submit' disabled={pristine || submitting || !valid}>
                   Done
                 </Button>
               </div>

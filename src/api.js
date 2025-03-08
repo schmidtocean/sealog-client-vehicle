@@ -6,6 +6,7 @@ import { getImageUrl } from './utils'
 import { API_ROOT_URL } from './client_settings'
 
 export const CRUISE_ROUTE = '/files/cruises'
+export const IMAGE_ROUTE = '/files/images'
 export const LOWERING_ROUTE = '/files/lowerings'
 
 export const authorizationHeader = () => {
@@ -29,9 +30,6 @@ const _buildQueryString = (queryDict) => {
       return acc
     }, [])
     .join('&')
-
-  // console.debug("queryDict:", queryDict);
-  // console.debug("queryStr:", queryStr);
 
   return queryStr
 }
@@ -58,8 +56,10 @@ const _errorNot400 = (error) => {
 }
 
 const _handleFileDelete = async (filename, route, id, callback) => {
+  const url = id ? `${API_ROOT_URL}${route}/${id}/${filename}` : `${API_ROOT_URL}${route}/${filename}`
+
   await axios
-    .delete(`${API_ROOT_URL}${route}/${id}/${filename}`, authorizationHeader())
+    .delete(url, authorizationHeader())
     .then(async () => {
       await callback()
     })
@@ -70,8 +70,10 @@ const _handleFileDelete = async (filename, route, id, callback) => {
 }
 
 const _handleFileDownload = async (filename, route, id) => {
+  const url = id ? `${API_ROOT_URL}${route}/${id}/${filename}` : `${API_ROOT_URL}${route}/${filename}`
+
   await axios
-    .get(`${API_ROOT_URL}${route}/${id}/${filename}`, authorizationHeader())
+    .get(url, { ...authorizationHeader(), responseType: 'blob' })
     .then((response) => {
       FileDownload(response.data, filename)
     })
@@ -83,7 +85,7 @@ const _handleFileDownload = async (filename, route, id) => {
 
 const _handleImageDownload = async (image_path) => {
   await axios
-    .get(getImageUrl(image_path), authorizationHeader())
+    .get(getImageUrl(image_path), { ...authorizationHeader(), responseType: 'blob' })
     .then((response) => {
       FileDownload(response.data, basename(image_path))
     })
@@ -217,6 +219,18 @@ export const get_cruises = async (queryDict = {}, id = null) => {
     })
 }
 
+export const get_cruise_by_lowering = async (id) => {
+  return await axios
+    .get(`${API_ROOT_URL}/api/v1/cruises/bylowering/${id}`, authorizationHeader())
+    .then((response) => {
+      return response.data
+    })
+    .catch((error) => {
+      _errorNot404(error)
+      return {}
+    })
+}
+
 export const update_cruise = async (payload, id) => {
   return await axios
     .patch(`${API_ROOT_URL}/api/v1/cruises/${id}`, payload, authorizationHeader())
@@ -236,7 +250,7 @@ export const update_cruise_permissions = async (payload, id, callback) => {
       await callback()
     })
     .catch((error) => {
-      _errorNot404(error)
+      _errorNot400(error)
     })
 }
 
@@ -262,6 +276,30 @@ export const update_custom_var = async (payload, id) => {
 }
 
 // Aux Data
+export const create_event_aux_data = async (payload) => {
+  return await axios
+    .post(`${API_ROOT_URL}/api/v1/event_aux_data`, payload, authorizationHeader())
+    .then((response) => {
+      return { success: true, data: response.data }
+    })
+    .catch((error) => {
+      _errorNot400(error)
+      return { error }
+    })
+}
+
+export const delete_event_aux_data = async (id) => {
+  return await axios
+    .delete(`${API_ROOT_URL}/api/v1/event_aux_data/${id}`, authorizationHeader())
+    .then(() => {
+      return { success: true }
+    })
+    .catch((error) => {
+      console.debug(error)
+      return { error }
+    })
+}
+
 export const get_event_aux_data = async (queryDict = {}, id = null) => {
   const queryStr = id ? `/${id}?` : '?' + _buildQueryString(queryDict)
 
@@ -304,12 +342,11 @@ export const get_event_aux_data_by_lowering = async (queryDict, id) => {
     })
 }
 
-// Event Exports
-export const create_event_template = async (payload) => {
+export const update_event_aux_data = async (payload, id) => {
   return await axios
-    .post(`${API_ROOT_URL}/api/v1/event_templates`, payload, authorizationHeader())
-    .then((response) => {
-      return { success: true, data: response.data }
+    .patch(`${API_ROOT_URL}/api/v1/event_aux_data/${id}`, payload, authorizationHeader())
+    .then(() => {
+      return { success: true }
     })
     .catch((error) => {
       _errorNot400(error)
@@ -317,6 +354,7 @@ export const create_event_template = async (payload) => {
     })
 }
 
+// Event Exports
 export const get_event_exports = async (queryDict = {}, id = null) => {
   const queryStr = id ? `/${id}?` : '?' + _buildQueryString(queryDict)
 
@@ -360,6 +398,18 @@ export const get_event_exports_by_lowering = async (queryDict, id) => {
 }
 
 // Event Templatess
+export const create_event_template = async (payload) => {
+  return await axios
+    .post(`${API_ROOT_URL}/api/v1/event_templates`, payload, authorizationHeader())
+    .then((response) => {
+      return { success: true, data: response.data }
+    })
+    .catch((error) => {
+      _errorNot400(error)
+      return { error }
+    })
+}
+
 export const delete_event_template = async (id) => {
   return await axios
     .delete(`${API_ROOT_URL}/api/v1/event_templates/${id}`, authorizationHeader())
@@ -619,7 +669,7 @@ export const create_user = async (payload) => {
       return { success: true, data: response.data }
     })
     .catch((error) => {
-      console.debug(error)
+      _errorNot400()
       return { error }
     })
 }
@@ -689,6 +739,10 @@ export const handle_lowering_file_delete = async (filename, lowering_id, callbac
 
 export const handle_lowering_file_download = async (filename, lowering_id) => {
   await _handleFileDownload(filename, LOWERING_ROUTE, lowering_id)
+}
+
+export const handle_image_file_delete = async (filename, callback) => {
+  await _handleFileDelete(filename, IMAGE_ROUTE, callback)
 }
 
 export const handle_image_file_download = async (image_path) => {

@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { reduxForm, Field, change } from 'redux-form'
-import { Button, Card, Form } from 'react-bootstrap'
+import { Button, Card, Form, Row } from 'react-bootstrap'
 import { renderAlert, renderDateTimePicker, renderMessage, renderTextField, renderTextArea, dateFormat } from './form_elements'
 import moment from 'moment'
 import PropTypes from 'prop-types'
@@ -11,14 +11,10 @@ import { FilePond } from 'react-filepond'
 import CopyLoweringToClipboard from './copy_lowering_to_clipboard'
 import { authorizationHeader, handle_lowering_file_delete, handle_lowering_file_download, LOWERING_ROUTE } from '../api'
 import { API_ROOT_URL, LOWERING_ID_PLACEHOLDER, LOWERING_ID_REGEX } from '../client_settings'
-import { _Lowering_ } from '../vocab'
-
+import { _Lowering_, _lowering_ } from '../vocab'
 import * as mapDispatchToProps from '../actions'
 
 const timeFormat = 'HH:mm'
-
-const start_ts = moment.utc().set('second', 0).set('millisecond', 0)
-const stop_ts = start_ts.clone().add(1, 'days')
 
 class LoweringForm extends Component {
   constructor(props) {
@@ -103,7 +99,7 @@ class LoweringForm extends Component {
     const formHeader = (
       <div>
         {this.props.lowering.id ? 'Update' : 'Add'} {_Lowering_}
-        <span className='float-right'>{this.props.lowering.id ? <CopyLoweringToClipboard lowering={this.props.lowering} /> : null}</span>
+        <span className='float-end'>{this.props.lowering.id ? <CopyLoweringToClipboard lowering={this.props.lowering} /> : null}</span>
       </div>
     )
 
@@ -117,7 +113,7 @@ class LoweringForm extends Component {
           <Card.Header>{formHeader}</Card.Header>
           <Card.Body>
             <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
-              <Form.Row>
+              <Row>
                 <Field
                   name='lowering_id'
                   component={renderTextField}
@@ -136,8 +132,8 @@ class LoweringForm extends Component {
                   sm={6}
                   lg={6}
                 />
-              </Form.Row>
-              <Form.Row>
+              </Row>
+              <Row>
                 <Field
                   name='lowering_additional_meta.lowering_description'
                   component={renderTextArea}
@@ -145,8 +141,8 @@ class LoweringForm extends Component {
                   placeholder={`i.e. A brief description of the ${_Lowering_}`}
                   rows={8}
                 />
-              </Form.Row>
-              <Form.Row>
+              </Row>
+              <Row>
                 <Field
                   name='start_ts'
                   component={renderDateTimePicker}
@@ -165,8 +161,8 @@ class LoweringForm extends Component {
                   sm={6}
                   lg={6}
                 />
-              </Form.Row>
-              <Form.Row>
+              </Row>
+              <Row>
                 <Field
                   name='lowering_tags'
                   component={renderTextArea}
@@ -174,7 +170,7 @@ class LoweringForm extends Component {
                   placeholder='i.e. coral,chemistry,engineering'
                   rows={2}
                 />
-              </Form.Row>
+              </Row>
               <Form.Label>{_Lowering_} Files</Form.Label>
               {this.renderFiles()}
               <FilePond
@@ -199,30 +195,35 @@ class LoweringForm extends Component {
               ></FilePond>
               {renderAlert(this.props.errorMessage)}
               {renderMessage(this.props.message)}
-              <Form.Row className='float-right'>
+              <div className='mt-4'>
                 {this.props.lowering.id ? (
-                  <Button className='mr-1' variant='warning' size='sm' onClick={this.handleSetLoweringStatsModal}>
+                  <Button variant='outline-warning' size='sm' onClick={this.handleSetLoweringStatsModal}>
                     Milestones
                   </Button>
                 ) : null}
-                <Button className='mr-1' variant='secondary' size='sm' disabled={pristine || submitting} onClick={reset}>
-                  Reset Values
-                </Button>
                 <Button
-                  variant='primary'
+                  className='float-end'
+                  variant='outline-primary'
                   size='sm'
                   type='submit'
                   disabled={(submitting || !valid || pristine) && this.state.filepondPristine}
                 >
                   {this.props.lowering.id ? 'Update' : 'Add'}
                 </Button>
-              </Form.Row>
+                <Button className='me-1 float-end' variant='outline-secondary' size='sm' disabled={pristine || submitting} onClick={reset}>
+                  Reset Values
+                </Button>
+              </div>
             </Form>
           </Card.Body>
         </Card>
       )
     } else {
-      return null
+      return (
+        <Card>
+          <Card.Header>{`Please select a ${_lowering_} to edit.`}</Card.Header>
+        </Card>
+      )
     }
   }
 }
@@ -287,6 +288,9 @@ const warn = (formProps) => {
 }
 
 const mapStateToProps = (state) => {
+  const start_ts = moment.utc().set('second', 0).set('millisecond', 0)
+  const stop_ts = start_ts.clone().add(1, 'days')
+
   let initialValues = {
     start_ts,
     stop_ts,

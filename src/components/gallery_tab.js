@@ -6,7 +6,7 @@ import CustomPagination from './custom_pagination'
 import { getImageUrl, handleMissingImage } from '../utils'
 import * as mapDispatchToProps from '../actions'
 
-class LoweringGalleryTab extends Component {
+class GalleryTab extends Component {
   constructor(props) {
     super(props)
 
@@ -116,7 +116,7 @@ class LoweringGalleryTab extends Component {
   }
 }
 
-LoweringGalleryTab.propTypes = {
+GalleryTab.propTypes = {
   imagesSource: PropTypes.string.isRequired,
   imagesData: PropTypes.object.isRequired,
   maxImagesPerPage: PropTypes.number.isRequired,
@@ -124,4 +124,4 @@ LoweringGalleryTab.propTypes = {
   updateEvent: PropTypes.func.isRequired
 }
 
-export default connect(null, mapDispatchToProps)(LoweringGalleryTab)
+export default connect(null, mapDispatchToProps)(GalleryTab)
