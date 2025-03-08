@@ -2,10 +2,9 @@ import React, { Component } from 'react'
 import { compose } from 'redux'
 import { connectModal } from 'redux-modal'
 import PropTypes from 'prop-types'
-import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Collapse, Form, ListGroup, Modal } from 'react-bootstrap'
-import { get_cruises, get_lowerings, update_cruise_permissions, update_lowering_permissions } from '../api'
+import { get_cruises, get_lowerings_by_cruise, get_users, update_cruise_permissions, update_lowering_permissions } from '../api'
 
 const updateType = {
   ADD: true,
@@ -17,10 +16,37 @@ class RenderTableRow extends Component {
     super(props)
 
     this.state = {
-      open: false
+      open: false,
+      cruise: {},
+      lowerings: []
     }
 
     this.toggleRowCollapse = this.toggleRowCollapse.bind(this)
+    this.fetchLowerings = this.fetchLowerings.bind(this)
+    this.updateCruisePermissions = this.updateCruisePermissions.bind(this)
+    this.updateLoweringPermissions = this.updateLoweringPermissions.bind(this)
+  }
+
+  componentDidMount() {
+    this.fetchCruise()
+    this.fetchLowerings()
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.cruise_id !== this.props.cruise_id) {
+      this.fetchCruise()
+      this.fetchLowerings()
+    }
+  }
+
+  async fetchCruise() {
+    const cruise = await get_cruises({}, this.props.cruise_id)
+    this.setState({ cruise })
+  }
+
+  async fetchLowerings() {
+    const lowerings = await get_lowerings_by_cruise(this.props.cruise_id)
+    this.setState({ lowerings })
   }
 
   toggleRowCollapse() {
@@ -29,29 +55,91 @@ class RenderTableRow extends Component {
     })
   }
 
-  render() {
-    const { cruise, lowerings } = this.props
+  async updateCruisePermissions(cruise_id, type) {
+    const payload = {}
+    if (type === updateType.ADD) {
+      payload.add = [this.props.user_id]
 
-    return (
-      <ListGroup.Item>
-        <div className='clearfix'>
-          {cruise}
-          <FontAwesomeIcon
-            className='text-primary float-right'
-            icon={this.state.open ? 'chevron-up' : 'chevron-down'}
-            fixedWidth
-            onClick={this.toggleRowCollapse}
+      this.state.lowerings.forEach(async (lowering) => {
+        await update_lowering_permissions(payload, lowering.id)
+      })
+    } else if (type === updateType.REMOVE) {
+      payload.remove = [this.props.user_id]
+    }
+
+    await update_cruise_permissions(payload, cruise_id)
+    await this.fetchLowerings()
+    await this.fetchCruise()
+  }
+
+  async updateLoweringPermissions(lowering_id, type) {
+    const payload = {}
+    if (type === updateType.ADD) {
+      payload.add = [this.props.user_id]
+    } else if (type === updateType.REMOVE) {
+      payload.remove = [this.props.user_id]
+    }
+
+    await update_lowering_permissions(payload, lowering_id)
+    await this.fetchLowerings()
+  }
+
+  render() {
+    const { cruise_id, user_id } = this.props
+
+    return this.state.cruise.id ? (
+      <React.Fragment>
+        <ListGroup.Item className='event-list-item d-flex justify-content-between'>
+          <Form.Check
+            type='switch'
+            id={`cruise_${cruise_id}`}
+            label={`${this.state.cruise.cruise_id}${this.state.cruise.cruise_additional_meta.cruise_name ? ': ' + this.state.cruise.cruise_additional_meta.cruise_name : ''}`}
+            checked={this.state.cruise.cruise_access_list && this.state.cruise.cruise_access_list.includes(user_id)}
+            onChange={(e) => {
+              this.updateCruisePermissions(cruise_id, e.target.checked)
+            }}
           />
-        </div>
-        <Collapse in={this.state.open}>{lowerings}</Collapse>
-      </ListGroup.Item>
-    )
+          {this.state.lowerings.length ? (
+            <FontAwesomeIcon
+              className='text-primary float-right'
+              icon={this.state.open ? 'chevron-up' : 'chevron-down'}
+              fixedWidth
+              onClick={this.toggleRowCollapse}
+            />
+          ) : null}
+        </ListGroup.Item>
+        {this.state.lowerings.length ? (
+          <Collapse in={this.state.open}>
+            <ListGroup>
+              {this.state.lowerings.map((lowering) => {
+                return (
+                  <ListGroup.Item key={lowering.lowering_id} className='event-list-item ms-2'>
+                    <Form.Check
+                      type='switch'
+                      id={`lowering_${lowering.id}`}
+                      label={`${lowering.lowering_id}${lowering.lowering_additional_meta.lowering_name ? ': ' + lowering.lowering_additional_meta.lowering_name : ''}`}
+                      checked={lowering.lowering_access_list && lowering.lowering_access_list.includes(user_id)}
+                      onChange={(e) => {
+                        this.updateLoweringPermissions(lowering.id, e.target.checked)
+                      }}
+                      disabled={!this.state.cruise.cruise_access_list.includes(user_id)}
+                    />
+                  </ListGroup.Item>
+                )
+              })}
+            </ListGroup>
+          </Collapse>
+        ) : null}
+      </React.Fragment>
+    ) : null
   }
 }
 
 RenderTableRow.propTypes = {
-  cruise: PropTypes.object.isRequired,
-  lowerings: PropTypes.object.isRequired
+  cruise_id: PropTypes.string.isRequired,
+  // lowerings: PropTypes.array.isRequired,
+  // updateLoweringPermissions: PropTypes.func,
+  user_id: PropTypes.string
 }
 
 class UserPermissionsModal extends Component {
@@ -60,70 +148,17 @@ class UserPermissionsModal extends Component {
 
     this.state = {
       cruises: [],
-      lowerings: [],
-      permissions: { cruises: [], lowerings: [] }
+      user: {}
     }
 
-    this.updateCruisePermissions = this.updateCruisePermissions.bind(this)
-    this.updateLoweringPermissions = this.updateLoweringPermissions.bind(this)
     this.fetchCruises = this.fetchCruises.bind(this)
-    this.fetchLowerings = this.fetchLowerings.bind(this)
+    this.fetchUser = this.fetchUser.bind(this)
+    this.handleHide = this.handleHide.bind(this)
   }
 
   componentDidMount() {
     this.fetchCruises()
-    this.fetchLowerings()
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.user_id && (prevState.cruises !== this.state.cruises || prevState.lowerings !== this.state.lowerings)) {
-      let permissions = { cruises: [], lowerings: [] }
-
-      permissions = this.state.cruises.reduce((cruise_permissions, cruise) => {
-        if (cruise.cruise_access_list && cruise.cruise_access_list.includes(this.props.user_id)) {
-          cruise_permissions.cruises.push(cruise.id)
-        }
-
-        return cruise_permissions
-      }, permissions)
-
-      permissions = this.state.lowerings.reduce((lowering_permissions, lowering) => {
-        if (lowering.lowering_access_list && lowering.lowering_access_list.includes(this.props.user_id)) {
-          lowering_permissions.lowerings.push(lowering.id)
-        }
-
-        return lowering_permissions
-      }, permissions)
-
-      this.setState({ permissions })
-    }
-  }
-
-  async updateCruisePermissions(cruise_id, user_id, type) {
-    const payload = {}
-    if (type === updateType.ADD) {
-      payload.add = [user_id]
-    } else if (type === updateType.REMOVE) {
-      payload.remove = [user_id]
-    }
-
-    const callback = async () => {
-      await this.fetchCruises()
-      await this.fetchLowerings()
-    }
-
-    await update_cruise_permissions(payload, cruise_id, async () => await callback())
-  }
-
-  async updateLoweringPermissions(lowering_id, user_id, type) {
-    const payload = {}
-    if (type === updateType.ADD) {
-      payload.add = [user_id]
-    } else if (type === updateType.REMOVE) {
-      payload.remove = [user_id]
-    }
-
-    await update_lowering_permissions(payload, lowering_id, async () => await this.fetchLowerings())
+    this.fetchUser()
   }
 
   async fetchCruises() {
@@ -131,81 +166,46 @@ class UserPermissionsModal extends Component {
     this.setState({ cruises })
   }
 
-  async fetchLowerings() {
-    const lowerings = await get_lowerings()
-    this.setState({ lowerings })
+  async fetchUser() {
+    const user = await get_users({}, this.props.user_id)
+    this.setState({ user })
+  }
+
+  handleHide() {
+    this.props.onClose()
+    this.props.handleHide()
   }
 
   render() {
-    const { show, user_id, handleHide } = this.props
+    const { show, user_id } = this.props
 
-    const body =
-      this.props.user_id && this.state.cruises && this.state.lowerings
-        ? this.state.cruises.map((cruise) => {
-            const cruiseCheckbox = (
-              <Form.Check
-                type='switch'
-                id={`cruise_${cruise.id}`}
-                label={`${cruise.cruise_id}${cruise.cruise_additional_meta.cruise_name ? ': ' + cruise.cruise_additional_meta.cruise_name : ''}`}
-                checked={this.state.permissions.cruises.includes(cruise.id)}
-                onChange={(e) => {
-                  this.updateCruisePermissions(cruise.id, user_id, e.target.checked)
-                }}
-              />
-            )
-
-            let startOfCruise = new Date(cruise.start_ts)
-            let endOfCruise = new Date(cruise.stop_ts)
-
-            const cruiseLoweringsTemp = this.state.lowerings.filter((lowering) =>
-              moment.utc(lowering.start_ts).isBetween(moment.utc(startOfCruise), moment.utc(endOfCruise))
-            )
-            const loweringCheckboxes = (
-              <ul>
-                {' '}
-                {cruiseLoweringsTemp.map((lowering) => {
-                  return (
-                    <Form.Check
-                      type='switch'
-                      key={`lowering_${lowering.id}`}
-                      id={`lowering_${lowering.id}`}
-                      label={`${lowering.lowering_id}: ${lowering.lowering_location ? lowering.lowering_location + ' ' : ''}`}
-                      checked={this.state.permissions.lowerings.includes(lowering.id)}
-                      disabled={!this.state.permissions.cruises.includes(cruise.id)}
-                      onChange={(e) => {
-                        this.updateLoweringPermissions(lowering.id, user_id, e.target.checked)
-                      }}
-                    />
-                  )
-                })}{' '}
-              </ul>
-            )
-
-            return <RenderTableRow key={cruise.id} cruise={cruiseCheckbox} lowerings={loweringCheckboxes} />
-          })
-        : null
-
-    if (body) {
-      return (
-        <Modal show={show} onHide={handleHide}>
-          <form>
-            <Modal.Header closeButton>
-              <Modal.Title>User Permissions</Modal.Title>
-            </Modal.Header>
-            {body}
-          </form>
-        </Modal>
-      )
-    } else {
-      return null
-    }
+    return this.state.user.username ? (
+      <Modal size='md' show={show} onHide={this.handleHide}>
+        <form>
+          <Modal.Header className='bg-light' closeButton>
+            <Modal.Title>
+              Access permissions for{' '}
+              <i>
+                <b>{this.state.user.username}</b>
+              </i>
+            </Modal.Title>
+          </Modal.Header>
+          <ListGroup>
+            {this.state.cruises.map((cruise) => {
+              return <RenderTableRow key={cruise.id} cruise_id={cruise.id} user_id={user_id} />
+            })}
+          </ListGroup>
+        </form>
+      </Modal>
+    ) : null
   }
 }
 
 UserPermissionsModal.propTypes = {
+  user_id: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
   handleHide: PropTypes.func.isRequired,
-  show: PropTypes.bool.isRequired,
-  user_id: PropTypes.string.isRequired
+  show: PropTypes.bool.isRequired
 }
 
 export default compose(connectModal({ name: 'userPermissions' }))(UserPermissionsModal)
