@@ -78,7 +78,11 @@ class CopyCruiseToClipboard extends Component {
     return (
       <OverlayTrigger placement='top' overlay={<Tooltip id='copyToClipboardTooltip'>Copy to clipboard</Tooltip>}>
         <CopyToClipboard text={this.state.text}>
-          <FontAwesomeIcon icon='clipboard' className='text-primary' fixedWidth />
+          <FontAwesomeIcon
+            className={'text-primary' + (this.props.className ? ' ' + this.props.className : '')}
+            icon='clipboard'
+            fixedWidth
+          />
         </CopyToClipboard>
       </OverlayTrigger>
     )
@@ -86,6 +90,7 @@ class CopyCruiseToClipboard extends Component {
 }
 
 CopyCruiseToClipboard.propTypes = {
+  className: PropTypes.string,
   cruise: PropTypes.object,
   cruiseLowerings: PropTypes.array
 }

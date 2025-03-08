@@ -14,6 +14,7 @@ export default (state={ cruise: {}, cruises: [], cruise_message: '', cruise_erro
   switch(action.type){
 
     case INIT_CRUISE:
+      console.log("INIT_CRUISE")
       return { ...state, cruise: action.payload, cruise_message: '', cruise_error: '' };
 
     case UPDATE_CRUISE:
