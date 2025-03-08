@@ -26,7 +26,7 @@ class Footer extends Component {
   }
 
   componentDidMount() {
-    if (this.props.authenticated) {
+    if (this.props.authenticated && !DISABLE_EVENT_LOGGING) {
       this.fetchCustomVars()
 
       if (!DISABLE_EVENT_LOGGING) {

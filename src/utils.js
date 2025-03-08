@@ -11,6 +11,7 @@ import { API_ROOT_URL, ROOT_PATH, IMAGE_PATH } from './client_settings'
 // Credit rgov (WHOIGit/ndsf-sealog-client)
 export const getImageUrl = (image_path) => {
   return `${API_ROOT_URL}${IMAGE_PATH}/${basename(image_path)}`
+  // return `${API_ROOT_URL}${IMAGE_PATH}${image_path}`<-- WHOI should use this code
 }
 
 export const handleMissingImage = (ev) => {
