@@ -23,6 +23,10 @@ $input-border-radius: 2px;
 // @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
 // @import "~@fortawesome/fontawesome-free/scss/solid.scss";
 
+.accordion {
+  --bs-accordion-border-color: #{$gray-600};
+}
+
 .accordion-button {
   padding: 12px;
 }

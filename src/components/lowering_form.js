@@ -27,6 +27,16 @@ class LoweringForm extends Component {
     this.handleSetLoweringStatsModal = this.handleSetLoweringStatsModal.bind(this)
   }
 
+  componentDidMount() {
+    if (!this.props.lowering.id) {
+      const init_start_ts = moment.utc().set('second', 0).set('millisecond', 0)
+      const init_stop_ts = init_start_ts.clone().add(1, 'days')
+
+      this.props.dispatch(change('editLowering', 'start_ts', init_start_ts))
+      this.props.dispatch(change('editLowering', 'stop_ts', init_stop_ts))
+    }
+  }
+
   componentWillUnmount() {
     this.props.leaveLoweringForm()
   }
@@ -288,12 +298,7 @@ const warn = (formProps) => {
 }
 
 const mapStateToProps = (state) => {
-  const start_ts = moment.utc().set('second', 0).set('millisecond', 0)
-  const stop_ts = start_ts.clone().add(1, 'days')
-
   let initialValues = {
-    start_ts,
-    stop_ts,
     ...{ lowering_additional_meta: {} },
     ...state.lowering.lowering
   }
