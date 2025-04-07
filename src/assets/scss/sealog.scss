@@ -57,6 +57,11 @@ $input-border-radius: 2px;
   background-color: $gray-600;
 }
 
+.text-link {
+    color: inherit;
+    text-decoration: inherit;
+}
+
 .nav-tabs,
 .nav-pills,
 .category-tabs {
