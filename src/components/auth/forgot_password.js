@@ -35,9 +35,9 @@ class ForgotPassword extends Component {
             <div className='alert alert-success'>
               <strong>Success!</strong> {this.props.successMessage}
             </div>
-            <div className='text-center d-grid'>
-              <hr className='border-secondary' />
-              <Link className='btn btn-outline-primary btn-block' to={`/login`}>
+            <hr className='border-secondary' />
+            <div className='h-100 d-flex justify-content-center'>
+              <Link className='text-muted text-link' to={'/login'}>
                 Back to Login
               </Link>
             </div>
@@ -76,8 +76,8 @@ class ForgotPassword extends Component {
 
       return (
         <Card>
-          <Card.Header className='form-signin'>Forgot Password</Card.Header>
           <Card.Body>
+            <h5 className='form-signin-heading'>Forgot Password</h5>
             <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
               <Row>
                 <Field name='email' component={renderTextField} placeholder='Email Address' />
@@ -88,10 +88,12 @@ class ForgotPassword extends Component {
                 <Button variant='outline-primary' type='submit' disabled={submitting || !valid}>
                   Submit
                 </Button>
-                <hr />
-                <Link className='btn btn-outline-secondary' to={`/login`}>
-                  Back to Login
-                </Link>
+                <hr className='border-secondary' />
+                <div className='h-100 d-flex justify-content-center'>
+                  <Link className='text-muted text-link' to={'/login'}>
+                    Back to Login
+                  </Link>
+                </div>
               </div>
             </Form>
           </Card.Body>

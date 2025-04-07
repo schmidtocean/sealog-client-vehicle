@@ -98,13 +98,13 @@ class Login extends Component {
       </div>
     ) : null
 
-    const loginScreenTxt = <p style={{ width: '15rem', minWidth: '15rem', whiteSpace: 'pre-wrap' }}>{LOGIN_SCREEN_TXT}</p>
+    const loginScreenTxt = <p style={{ width: '18rem', minWidth: '18rem', whiteSpace: 'pre-wrap' }}>{LOGIN_SCREEN_TXT}</p>
 
     const loginFormCard = (
       <Card className='me-0' style={{ width: '15rem', minWidth: '15rem' }}>
         <Card.Body>
           <Form onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
-            <p>Please login to your account</p>
+            <h5>Please log in</h5>
             <Form.Group className='mb-2'>
               <Field name='username' component={renderTextField} placeholder='Username' />
             </Form.Group>
@@ -123,7 +123,7 @@ class Login extends Component {
             <Link className='text-muted text-link' to={'/forgotPassword'}>
               Forgot Password?
             </Link>
-            <div className='pt-3'>
+            <div className='pt-3 d-grid gap-2'>
               Don&apos;t have an account?
               <Link className='btn btn-sm btn-outline-primary ms-2' to={'/register'}>
                 Register
