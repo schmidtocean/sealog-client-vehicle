@@ -669,7 +669,7 @@ export const create_user = async (payload) => {
       return { success: true, data: response.data }
     })
     .catch((error) => {
-      _errorNot400()
+      _errorNot400(error)
       return { error }
     })
 }

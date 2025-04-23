@@ -1,7 +1,7 @@
 const Pkg = require('../package.json')
 
 // Set whether the server is using http/https
-// Default is http.
+// Default is http (false).
 const SERVER_TLS = false
 
 // Set the server hostname.
@@ -13,7 +13,7 @@ const SERVER_HOSTNAME = typeof window !== 'undefined' && window.location.hostnam
 const SERVER_PORT = 8100
 
 // Complete URLs for the Sealog Server.
-// This is comprised based on the SERVER_PROTOCOL, SERVER_HOSTNAME and
+// This is comprised based on the SERVER_TLS, SERVER_HOSTNAME and
 // SERVER_PORT varialbles
 const API_ROOT_URL = `${SERVER_TLS ? 'https' : 'http'}://${SERVER_HOSTNAME}:${SERVER_PORT}/sealog-server`
 const WS_ROOT_URL = `${SERVER_TLS ? 'wss' : 'ws'}://${SERVER_HOSTNAME}:${SERVER_PORT}/ws`
