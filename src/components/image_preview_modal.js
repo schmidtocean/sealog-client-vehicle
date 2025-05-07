@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import Path from 'path'
 import { Modal, Image } from 'react-bootstrap'
 import { connectModal } from 'redux-modal'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { handle_image_file_download } from '../api'
 import { handleMissingImage, getImageUrl } from '../utils'
 
 class ImagePreviewModal extends Component {
@@ -21,9 +23,17 @@ class ImagePreviewModal extends Component {
 
     if (name) {
       return (
-        <Modal size='lg' show={show} onHide={handleHide}>
+        <Modal size='xl' show={show} onHide={handleHide}>
           <Modal.Header className='bg-light' closeButton>
-            <Modal.Title as='h5'>Image Preview - {Path.basename(this.props.filepath)} </Modal.Title>
+            <Modal.Title as='h5'>
+              Image Preview - {Path.basename(this.props.filepath)}{' '}
+              <FontAwesomeIcon
+                onClick={() => handle_image_file_download(this.props.filepath)}
+                className='text-primary'
+                icon='download'
+                fixedWidth
+              />
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className='text-center'>

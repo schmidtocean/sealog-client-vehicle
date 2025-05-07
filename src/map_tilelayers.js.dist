@@ -6,14 +6,14 @@ export const TILE_LAYERS = [
     name: 'Carto Dark',
     attribution:
       '&copy <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy <a href="https://carto.com/about-carto/">dark_all</a>',
-    url: '  https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-    default: true
+    url: '  https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
   },
   {
     name: 'Carto Voyager',
     attribution:
       '&copy <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy <a href="https://carto.com/about-carto/">dark_all</a>',
-    url: '  https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'
+    url: '  https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+    default: true
   },
   {
     name: 'GMRT Basemap',
@@ -24,6 +24,10 @@ export const TILE_LAYERS = [
     transparent: false
   }
 ]
+
+// List of overlay tilesets.  This can be set to an explicit list similar to
+// TILE_LAYERS or to a url that returns the array
+export const OVERLAY_LAYERS = []
 
 // Default location of map while data is loading or in the absence of position
 // data.

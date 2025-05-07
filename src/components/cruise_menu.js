@@ -1,15 +1,16 @@
 import React, { Component } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import moment from 'moment'
 import { connect } from 'react-redux'
-import { Accordion, Button, Card, Col, Container, Row } from 'react-bootstrap'
+import { Accordion, Card, Col, Row } from 'react-bootstrap'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import ExportDropdown from './export_dropdown'
+import ReviewDropdown from './review_dropdown'
 import CopyCruiseToClipboard from './copy_cruise_to_clipboard'
 import CopyLoweringToClipboard from './copy_lowering_to_clipboard'
 import { MAIN_SCREEN_HEADER, MAIN_SCREEN_TXT } from '../client_settings'
 import { handle_cruise_file_download, handle_lowering_file_download } from '../api'
-import { ABORT_MILESTONE, LOWERING_ASCENT, LOWERING_DESCENT } from '../milestones'
+import { ABORT_MILESTONE } from '../milestones'
 import { _Cruise_, _cruises_, _Lowering_, _Lowerings_ } from '../vocab'
 import * as mapDispatchToProps from '../actions'
 
@@ -140,30 +141,6 @@ class CruiseMenu extends Component {
     }
   }
 
-  handleLoweringSelectForReplay() {
-    if (this.state.activeLowering) {
-      this.props.clearEvents()
-      this.props.initCruise(this.state.activeCruise.id)
-      this.props.gotoLoweringReplay(this.state.activeLowering.id)
-    }
-  }
-
-  handleLoweringSelectForMap() {
-    if (this.state.activeLowering) {
-      this.props.clearEvents()
-      this.props.initCruise(this.state.activeCruise.id)
-      this.props.gotoLoweringMap(this.state.activeLowering.id)
-    }
-  }
-
-  handleLoweringSelectForGallery() {
-    if (this.state.activeLowering) {
-      this.props.clearEvents()
-      this.props.initCruise(this.state.activeCruise.id)
-      this.props.gotoLoweringGallery(this.state.activeLowering.id)
-    }
-  }
-
   renderCruiseFiles(files) {
     let output = files.map((file, index) => {
       return (
@@ -214,7 +191,6 @@ class CruiseMenu extends Component {
       let cruiseDescription = this.state.activeCruise.cruise_additional_meta.cruise_description ? (
         <p className='text-justify' style={{ whiteSpace: 'pre-wrap' }}>
           <strong>Description:</strong> {this.state.activeCruise.cruise_additional_meta.cruise_description}
-          <br />
         </p>
       ) : null
       let cruiseVessel = (
@@ -249,9 +225,6 @@ class CruiseMenu extends Component {
           <br />
         </span>
       )
-      let cruiseLowerings = this.props.lowerings.filter((lowering) =>
-        moment.utc(lowering.start_ts).isBetween(cruiseStartTime, cruiseStopTime)
-      )
 
       let cruiseDuration = (
         <span>
@@ -260,27 +233,29 @@ class CruiseMenu extends Component {
         </span>
       )
 
+      let cruiseLowerings = this.props.lowerings.filter((lowering) =>
+        moment.utc(lowering.start_ts).isBetween(cruiseStartTime, cruiseStopTime)
+      )
+
+      cruiseLowerings.reverse()
+
       let lowerings =
         cruiseLowerings.length > 0
           ? cruiseLowerings.map((lowering) => {
-              if (this.state.activeLowering && lowering.id === this.state.activeLowering.id) {
-                return (
-                  <div key={`select_${lowering.id}`} className='text-warning ml-2'>
-                    {lowering.lowering_id}
-                  </div>
-                )
-              }
-
-              return (
-                <div
+              return this.state.activeLowering && lowering.id === this.state.activeLowering.id ? (
+                <span key={`select_${lowering.id}`} className='text-warning ms-2'>
+                  {lowering.lowering_id}
+                </span>
+              ) : (
+                <span
                   key={`select_${lowering.id}`}
                   className={
-                    this.state.activeLowering && lowering.id === this.state.activeLowering.id ? 'text-warning ml-2' : 'text-primary ml-2'
+                    this.state.activeLowering && lowering.id === this.state.activeLowering.id ? 'text-warning ms-2' : 'text-primary ms-2'
                   }
                   onClick={() => this.handleLoweringSelect(lowering.id)}
                 >
                   {lowering.lowering_id}
-                </div>
+                </span>
               )
             })
           : null
@@ -289,35 +264,26 @@ class CruiseMenu extends Component {
         <Card className='border-secondary' key={`cruise_${this.state.activeCruise.cruise_id}`}>
           <Card.Header>
             {_Cruise_}:<span className='text-warning'> {this.state.activeCruise.cruise_id}</span>
-            <span className='float-right'>
-              <CopyCruiseToClipboard cruise={this.state.activeCruise} cruiseLowerings={cruiseLowerings} />
-              <ExportDropdown
-                id='dropdown-download'
-                disabled={false}
-                hideASNAP={false}
-                eventFilter={{}}
-                cruiseID={this.state.activeCruise.id}
-                prefix={this.state.activeCruise.cruise_id}
-              />
-            </span>
+            <div className='float-end'>
+              <CopyCruiseToClipboard className='ps-1' cruise={this.state.activeCruise} />
+            </div>
           </Card.Header>
           <Card.Body>
             {cruiseName}
             {cruisePi}
-            {cruiseDescription}
-            {cruiseVessel}
             {cruiseLocation}
-            {cruiseDates}
+            {cruiseVessel}
             {cruisePorts}
+            {cruiseDates}
             {cruiseDuration}
-            {cruiseFiles}
-            <br />
             {cruiseLowerings && cruiseLowerings.length > 0 ? (
               <div>
-                <strong>{_Lowerings_}: </strong>
-                {lowerings}
+                <strong>{_Lowerings_}:</strong> {lowerings}
               </div>
             ) : null}
+            <br />
+            {cruiseDescription}
+            {cruiseFiles}
           </Card.Body>
         </Card>
       )
@@ -327,26 +293,6 @@ class CruiseMenu extends Component {
   renderLoweringCard() {
     if (this.state.activeLowering) {
       let loweringStartTime = moment.utc(this.state.activeLowering.start_ts)
-      let loweringDescendingTime =
-        this.state.activeLowering.lowering_additional_meta.milestones &&
-        this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_DESCENT[0]]
-          ? moment.utc(this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_DESCENT[0]])
-          : null
-      let loweringOnBottomTime =
-        this.state.activeLowering.lowering_additional_meta.milestones &&
-        this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_DESCENT[1]]
-          ? moment.utc(this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_DESCENT[1]])
-          : null
-      let loweringOffBottomTime =
-        this.state.activeLowering.lowering_additional_meta.milestones &&
-        this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_ASCENT[0]]
-          ? moment.utc(this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_ASCENT[0]])
-          : null
-      let loweringOnSurfaceTime =
-        this.state.activeLowering.lowering_additional_meta.milestones &&
-        this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_ASCENT[1]]
-          ? moment.utc(this.state.activeLowering.lowering_additional_meta.milestones[LOWERING_ASCENT[1]])
-          : null
       let loweringStopTime = moment.utc(this.state.activeLowering.stop_ts)
       let loweringAbortTime =
         this.state.activeLowering.lowering_additional_meta.milestones &&
@@ -355,11 +301,6 @@ class CruiseMenu extends Component {
           : null
 
       let deck2DeckDurationValue = loweringStopTime.diff(loweringStartTime)
-      let deploymentDuration = loweringStartTime && loweringDescendingTime ? loweringDescendingTime.diff(loweringStartTime) : null
-      let decentDurationValue = loweringOnBottomTime && loweringDescendingTime ? loweringOnBottomTime.diff(loweringDescendingTime) : null
-      let onBottomDurationValue = loweringOnBottomTime && loweringOffBottomTime ? loweringOffBottomTime.diff(loweringOnBottomTime) : null
-      let ascentDurationValue = loweringOffBottomTime && loweringOnSurfaceTime ? loweringOnSurfaceTime.diff(loweringOffBottomTime) : null
-      let recoveryDurationValue = loweringStopTime && loweringOnSurfaceTime ? loweringStopTime.diff(loweringOnSurfaceTime) : null
 
       let loweringDescription = this.state.activeLowering.lowering_additional_meta.lowering_description ? (
         <p className='text-justify' style={{ whiteSpace: 'pre-wrap' }}>
@@ -367,9 +308,10 @@ class CruiseMenu extends Component {
         </p>
       ) : null
       let loweringLocation = this.state.activeLowering.lowering_location ? (
-        <p>
+        <span>
           <strong>Location:</strong> {this.state.activeLowering.lowering_location}
-        </p>
+          <br />
+        </span>
       ) : null
       let loweringStarted = (
         <span>
@@ -379,37 +321,7 @@ class CruiseMenu extends Component {
       )
       let loweringDeck2DeckDuration = deck2DeckDurationValue ? (
         <span>
-          <strong>Deck-to-Deck:</strong> {moment.duration(deck2DeckDurationValue).format('d [days] h [hours] m [minutes]')}
-          <br />
-        </span>
-      ) : null
-      let loweringDeploymentDuration = deploymentDuration ? (
-        <span>
-          <strong>Deployment:</strong> {moment.duration(deploymentDuration).format('d [days] h [hours] m [minutes]')}
-          <br />
-        </span>
-      ) : null
-      let loweringDescentDuration = decentDurationValue ? (
-        <span>
-          <strong>Descent:</strong> {moment.duration(decentDurationValue).format('d [days] h [hours] m [minutes]')}
-          <br />
-        </span>
-      ) : null
-      let loweringOnBottomDuration = onBottomDurationValue ? (
-        <span>
-          <strong>On Bottom:</strong> {moment.duration(onBottomDurationValue).format('d [days] h [hours] m [minutes]')}
-          <br />
-        </span>
-      ) : null
-      let loweringAscentDuration = ascentDurationValue ? (
-        <span>
-          <strong>Ascent:</strong> {moment.duration(ascentDurationValue).format('d [days] h [hours] m [minutes]')}
-          <br />
-        </span>
-      ) : null
-      let loweringRecoveryDuration = ascentDurationValue ? (
-        <span>
-          <strong>Recovery:</strong> {moment.duration(recoveryDurationValue).format('d [days] h [hours] m [minutes]')}
+          <strong>Duration:</strong> {moment.duration(deck2DeckDurationValue).format('d [days] h [hours] m [minutes]')}
           <br />
         </span>
       ) : null
@@ -449,7 +361,8 @@ class CruiseMenu extends Component {
         <Card className='border-secondary' key={`lowering_card`}>
           <Card.Header>
             {_Lowering_}:<span className='text-warning'> {this.state.activeLowering.lowering_id}</span>
-            <span className='float-right'>
+            <span className='float-end'>
+              <ReviewDropdown id='dropdown-review' className='pe-3' loweringID={this.state.activeLowering.id} />
               <CopyLoweringToClipboard lowering={this.state.activeLowering} />
               <ExportDropdown
                 id='dropdown-download'
@@ -462,31 +375,15 @@ class CruiseMenu extends Component {
             </span>
           </Card.Header>
           <Card.Body>
-            {loweringDescription}
-            {loweringLocation}
             {loweringStarted}
-            {loweringDeck2DeckDuration}
-            {loweringDeploymentDuration}
-            {loweringDescentDuration}
-            {loweringOnBottomDuration}
-            {loweringAscentDuration}
-            {loweringRecoveryDuration}
             {loweringAborted}
+            {loweringDeck2DeckDuration}
+            {loweringLocation}
             {loweringMaxDepth}
             {loweringBoundingBox}
-            {loweringFiles}
             <br />
-            <Row className='px-1 justify-content-center'>
-              <Button className='mb-1 mr-1' size='sm' variant='outline-primary' onClick={() => this.handleLoweringSelectForReplay()}>
-                Replay
-              </Button>
-              <Button className='mb-1 mr-1' size='sm' variant='outline-primary' onClick={() => this.handleLoweringSelectForMap()}>
-                Map
-              </Button>
-              <Button className='mb-1 mr-1' size='sm' variant='outline-primary' onClick={() => this.handleLoweringSelectForGallery()}>
-                Gallery
-              </Button>
-            </Row>
+            {loweringDescription}
+            {loweringFiles}
           </Card.Body>
         </Card>
       )
@@ -553,7 +450,7 @@ class CruiseMenu extends Component {
           return (
             <div
               key={`select_${cruise.id}`}
-              className={this.state.activeCruise && cruise.id === this.state.activeCruise.id ? 'ml-2 text-warning' : 'ml-2 text-primary'}
+              className={this.state.activeCruise && cruise.id === this.state.activeCruise.id ? 'ms-2 text-warning' : 'ms-2 text-primary'}
               onClick={() => this.handleCruiseSelect(cruise.id)}
             >
               {cruise.cruise_id}
@@ -563,14 +460,14 @@ class CruiseMenu extends Component {
 
         if (this.state.years.size > 1) {
           yearCards.unshift(
-            <Card className='border-secondary' key={`year_${year}`}>
-              <Accordion.Toggle as={Card.Header} eventKey={year}>
-                <h6>Year: {yearTxt}</h6>
-              </Accordion.Toggle>
-              <Accordion.Collapse eventKey={year}>
-                <Card.Body className='py-2'>{yearCruises}</Card.Body>
-              </Accordion.Collapse>
-            </Card>
+            <Accordion.Item eventKey={year} key={`year_${year}`}>
+              <Accordion.Header>
+                <span>Year: {yearTxt}</span>
+              </Accordion.Header>
+              <Accordion.Body className='p-2'>
+                <span>{yearCruises}</span>
+              </Accordion.Body>
+            </Accordion.Item>
           )
         } else {
           yearCards.push(
@@ -722,39 +619,34 @@ class CruiseMenu extends Component {
 
   render() {
     return (
-      <Container className='mt-2'>
+      <div className='mt-2'>
         <Row>
           <h4>{MAIN_SCREEN_HEADER}</h4>
           <p className='text-justify' style={{ whiteSpace: 'pre-wrap' }}>
             {MAIN_SCREEN_TXT}
           </p>
         </Row>
-        <Row>
-          <Col className='px-1' sm={3} md={3} lg={2}>
+        <Row className='justify-content-center'>
+          <Col className='px-1 pb-2' sm={3} md={3} lg={2}>
             {this.renderYearList()}
           </Col>
-          <Col className='px-1' sm={4} md={4} lg={5}>
+          <Col className='px-1 pb-2' sm={7} md={4} lg={5}>
             {this.renderCruiseCard()}
           </Col>
-          <Col className='px-1' sm={5} md={5} lg={5}>
+          <Col className='px-1' sm={10} md={5} lg={5}>
             {this.renderLoweringCard()}
           </Col>
         </Row>
-      </Container>
+      </div>
     )
   }
 }
 
 CruiseMenu.propTypes = {
-  clearEvents: PropTypes.func.isRequired,
   cruise: PropTypes.object.isRequired,
   cruises: PropTypes.array.isRequired,
   fetchCruises: PropTypes.func.isRequired,
   fetchLowerings: PropTypes.func.isRequired,
-  gotoLoweringGallery: PropTypes.func.isRequired,
-  gotoLoweringMap: PropTypes.func.isRequired,
-  gotoLoweringReplay: PropTypes.func.isRequired,
-  initCruise: PropTypes.func.isRequired,
   lowering: PropTypes.object.isRequired,
   lowerings: PropTypes.array.isRequired
 }

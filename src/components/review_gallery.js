@@ -4,34 +4,42 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { ButtonToolbar, Container, Row, Col, Tabs, Tab, Form } from 'react-bootstrap'
 import PropTypes from 'prop-types'
 import EventShowDetailsModal from './event_show_details_modal'
-import LoweringGalleryTab from './lowering_gallery_tab'
-import LoweringModeDropdown from './lowering_mode_dropdown'
-import { get_event_aux_data_by_lowering } from '../api'
+import GalleryTab from './gallery_tab'
+import ReviewDropdown from './review_dropdown'
+import { get_event_aux_data_by_lowering, get_cruise_by_lowering } from '../api'
 import { IMAGES_AUX_DATA_SOURCES } from '../client_settings'
-import { _Lowerings_ } from '../vocab'
 import * as mapDispatchToProps from '../actions'
 
-class LoweringGallery extends Component {
+class ReviewGallery extends Component {
   constructor(props) {
     super(props)
 
     this.state = {
       fetching: false,
       aux_data: [],
+      replayEventIndex: 0,
       maxImagesPerPage: 16
     }
 
     this.formRef = React.createRef() // Reference to the slider
 
+    this.toggleASNAP = this.toggleASNAP.bind(this)
     this.handleImageCountChange = this.handleImageCountChange.bind(this)
-    this.handleLoweringModeSelect = this.handleLoweringModeSelect.bind(this)
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.initLoweringImages(this.props.match.params.id)
 
     if (!this.props.lowering.id || this.props.lowering.id !== this.props.match.params.id || this.props.event.events.length === 0) {
-      this.props.initLowering(this.props.match.params.id)
+      this.props.initReviewReplay(this.props.match.params.id)
+      const cruise = await get_cruise_by_lowering(this.props.match.params.id)
+      this.props.initCruise(cruise.id)
+    } else {
+      const eventIndex = this.props.event.events.findIndex((event) => event.id === this.props.event.selected_event.id)
+      this.setState({
+        replayEventIndex: eventIndex,
+        activePage: Math.ceil((eventIndex + 1) / this.state.maxImagesPerPage)
+      })
     }
   }
 
@@ -43,7 +51,7 @@ class LoweringGallery extends Component {
 
   toggleASNAP() {
     this.props.toggleASNAP()
-    this.props.eventUpdateLoweringReplay()
+    this.props.eventUpdateReviewReplay()
   }
 
   async initLoweringImages(id, auxDatasourceFilter = IMAGES_AUX_DATA_SOURCES) {
@@ -78,14 +86,6 @@ class LoweringGallery extends Component {
     event.currentTarget.blur()
   }
 
-  handleLoweringModeSelect(mode) {
-    if (mode === 'Map') {
-      this.props.gotoLoweringMap(this.props.match.params.id)
-    } else if (mode === 'Replay') {
-      this.props.gotoLoweringReplay(this.props.match.params.id)
-    }
-  }
-
   handleTabSelect(key, event) {
     if (event) {
       event.currentTarget.blur()
@@ -97,7 +97,7 @@ class LoweringGallery extends Component {
     for (const [key, value] of Object.entries(this.state.aux_data)) {
       galleries.push(
         <Tab key={`tab_${key}`} eventKey={`tab_${key}`} title={key}>
-          <LoweringGalleryTab imagesSource={key} imagesData={value} maxImagesPerPage={this.state.maxImagesPerPage} />
+          <GalleryTab imagesSource={key} imagesData={value} maxImagesPerPage={this.state.maxImagesPerPage} />
         </Tab>
       )
     }
@@ -131,17 +131,7 @@ class LoweringGallery extends Component {
     ) : (
       this.renderGalleries()
     )
-    const ASNAPToggle = (
-      <Form.Check
-        id='ASNAP'
-        type='switch'
-        inline
-        checked={this.props.event.hideASNAP}
-        onChange={() => this.toggleASNAP()}
-        disabled={this.props.event.fetching}
-        label='Hide ASNAP'
-      />
-    )
+
     const imgCountOptions = [16, 32, 48, 64, 80].map((img_count, idx) => {
       return <option key={`count_option${idx}`}>{img_count}</option>
     })
@@ -150,25 +140,24 @@ class LoweringGallery extends Component {
       <Container className='mt-2'>
         <EventShowDetailsModal />
         <Row className='d-flex align-items-center justify-content-between'>
-          <ButtonToolbar className='align-items-center'>
+          <ButtonToolbar className='mb-2 ms-1 align-items-center'>
             <span onClick={() => this.props.gotoCruiseMenu()} className='text-warning'>
-              {_Lowerings_}
+              {this.props.cruise.cruise_id || 'Loading...'}
             </span>
             <FontAwesomeIcon icon='chevron-right' fixedWidth />
             <span className='text-warning'>{this.props.lowering.lowering_id || 'Loading...'}</span>
             <FontAwesomeIcon icon='chevron-right' fixedWidth />
-            <LoweringModeDropdown onClick={this.handleLoweringModeSelect} active_mode={'Gallery'} modes={['Replay', 'Map']} />
+            <ReviewDropdown loweringID={this.props.lowering.id} activeMode={'Gallery'} />
           </ButtonToolbar>
-          <span className='float-right' ref={this.formRef}>
-            <Form style={{ marginTop: '-4px' }} className='float-right' inline>
-              <Form.Group controlId='selectMaxImagesPerPage'>
-                <Form.Control size='sm' as='select' onChange={this.handleImageCountChange}>
-                  {imgCountOptions}
-                </Form.Control>
-                <Form.Label>&nbsp;&nbsp;Images/Page&nbsp;&nbsp;</Form.Label>
-              </Form.Group>
-            </Form>
-            {ASNAPToggle}
+          <span className='float-end' ref={this.formRef}>
+            <Form.Group style={{ marginTop: '-4px' }} className='float-end'>
+              <Form.Select size='sm' label='Images/Page' onChange={this.handleImageCountChange}>
+                {imgCountOptions}
+              </Form.Select>
+            </Form.Group>
+            <span className='me-2 text-primary float-end' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
+              {this.props.event.hideASNAP ? 'Show ASNAP' : 'Hide ASNAP'}
+            </span>
           </span>
         </Row>
         <Row>
@@ -179,24 +168,25 @@ class LoweringGallery extends Component {
   }
 }
 
-LoweringGallery.propTypes = {
+ReviewGallery.propTypes = {
+  cruise: PropTypes.object.isRequired,
   lowering: PropTypes.object.isRequired,
   event: PropTypes.object.isRequired,
-  eventUpdateLoweringReplay: PropTypes.func.isRequired,
+  eventUpdateReviewReplay: PropTypes.func.isRequired,
   gotoCruiseMenu: PropTypes.func.isRequired,
-  gotoLoweringMap: PropTypes.func.isRequired,
-  gotoLoweringReplay: PropTypes.func.isRequired,
-  initLowering: PropTypes.func.isRequired,
+  initCruise: PropTypes.func.isRequired,
+  initReviewReplay: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   toggleASNAP: PropTypes.func.isRequired
 }
 
 const mapStateToProps = (state) => {
   return {
+    cruise: state.cruise.cruise,
     roles: state.user.profile.roles,
     event: state.event,
     lowering: state.lowering.lowering
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(LoweringGallery)
+export default connect(mapStateToProps, mapDispatchToProps)(ReviewGallery)

@@ -6,13 +6,10 @@ import moment from 'moment'
 import { connect } from 'react-redux'
 import {
   get_event_aux_data,
-  get_event_aux_data_by_cruise,
   get_event_aux_data_by_lowering,
   get_event_exports,
-  get_event_exports_by_cruise,
   get_event_exports_by_lowering,
   get_events,
-  get_events_by_cruise,
   get_events_by_lowering
 } from '../api'
 
@@ -54,9 +51,7 @@ class ExportDropdown extends Component {
       sort: this.state.sort
     }
 
-    if (this.props.cruiseID) {
-      return await get_events_by_cruise(query, this.props.cruiseID)
-    } else if (this.props.loweringID) {
+    if (this.props.loweringID) {
       return await get_events_by_lowering(query, this.props.loweringID)
     }
     return await get_events(query)
@@ -72,9 +67,7 @@ class ExportDropdown extends Component {
       sort: this.state.sort
     }
 
-    if (this.props.cruiseID) {
-      return await get_event_aux_data_by_cruise(query, this.props.cruiseID)
-    } else if (this.props.loweringID) {
+    if (this.props.loweringID) {
       return await get_event_aux_data_by_lowering(query, this.props.loweringID)
     }
     return await get_event_aux_data(query)
@@ -92,9 +85,7 @@ class ExportDropdown extends Component {
       sort: this.state.sort
     }
 
-    if (this.props.cruiseID) {
-      return await get_event_exports_by_cruise(query, this.props.cruiseID)
-    } else if (this.props.loweringID) {
+    if (this.props.loweringID) {
       return await get_event_exports_by_lowering(query, this.props.loweringID)
     }
     return await get_event_exports(query)
@@ -138,8 +129,13 @@ class ExportDropdown extends Component {
     const className = this.props.className ? this.props.className : 'p-0'
 
     return (
-      <Dropdown className='no-arrow' as={'span'} id={this.state.id}>
-        <Dropdown.Toggle className={className} variant='link' disabled={this.props.disabled}>
+      <Dropdown as={'span'} id={this.state.id}>
+        <Dropdown.Toggle
+          className={className}
+          style={{ position: 'relative', bottom: '2px' }}
+          variant='link'
+          disabled={this.props.disabled}
+        >
           <OverlayTrigger placement='top' overlay={exportTooltip}>
             <FontAwesomeIcon icon='download' fixedWidth />
           </OverlayTrigger>
@@ -179,7 +175,6 @@ ExportDropdown.propTypes = {
   disabled: PropTypes.bool.isRequired,
   hideASNAP: PropTypes.bool.isRequired,
   eventFilter: PropTypes.object.isRequired,
-  cruiseID: PropTypes.string,
   loweringID: PropTypes.string,
   sort: PropTypes.string,
   className: PropTypes.string

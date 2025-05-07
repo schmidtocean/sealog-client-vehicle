@@ -556,21 +556,21 @@ class LoweringStatsModal extends Component {
               </Row>
               <Row className='mt-2'>
                 <Col xs={12}>
-                  <span className='float-right'>
+                  <span className='float-end'>
                     {!this.state.show_edit_form ? (
-                      <Button className='mr-1' variant='warning' size='sm' onClick={() => this.handleShowEditForm()}>
+                      <Button className='me-1' variant='outline-warning' size='sm' onClick={() => this.handleShowEditForm()}>
                         Tweak!
                       </Button>
                     ) : null}
                     {!this.state.show_edit_form ? (
-                      <Button className='mr-1' variant='secondary' size='sm' onClick={handleHide}>
-                        Close
+                      <Button className='me-1' variant='outline-secondary' size='sm' onClick={handleHide}>
+                        Cancel
                       </Button>
                     ) : null}
                     {!this.state.show_edit_form ? (
                       <Button
-                        className='mr-1'
-                        variant='primary'
+                        className='me-1'
+                        variant='outline-primary'
                         size='sm'
                         disabled={!this.state.touched}
                         onClick={() => this.handleUpdateLowering()}
