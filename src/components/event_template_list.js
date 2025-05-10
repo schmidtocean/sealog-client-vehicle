@@ -226,7 +226,7 @@ class EventTemplateList extends Component {
 
   render() {
     if (this.state.fetching) {
-      return <Alert>Loading...</Alert>
+      return <div>Loading event templates...</div>
     }
 
     if (this.props.event_templates.length > 0) {
