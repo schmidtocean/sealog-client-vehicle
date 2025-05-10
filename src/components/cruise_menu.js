@@ -242,12 +242,8 @@ class CruiseMenu extends Component {
       let lowerings =
         cruiseLowerings.length > 0
           ? cruiseLowerings.map((lowering) => {
-              return this.state.activeLowering && lowering.id === this.state.activeLowering.id ? (
-                <span key={`select_${lowering.id}`} className='text-warning ms-2'>
-                  {lowering.lowering_id}
-                </span>
-              ) : (
-                <span
+              return (
+                <Col
                   key={`select_${lowering.id}`}
                   className={
                     this.state.activeLowering && lowering.id === this.state.activeLowering.id ? 'text-warning ms-2' : 'text-primary ms-2'
@@ -255,7 +251,7 @@ class CruiseMenu extends Component {
                   onClick={() => this.handleLoweringSelect(lowering.id)}
                 >
                   {lowering.lowering_id}
-                </span>
+                </Col>
               )
             })
           : null
@@ -278,7 +274,8 @@ class CruiseMenu extends Component {
             {cruiseDuration}
             {cruiseLowerings && cruiseLowerings.length > 0 ? (
               <div>
-                <strong>{_Lowerings_}:</strong> {lowerings}
+                <strong>{_Lowerings_}:</strong>
+                <Row>{lowerings}</Row>
               </div>
             ) : null}
             <br />
