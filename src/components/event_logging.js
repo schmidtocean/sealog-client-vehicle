@@ -28,7 +28,7 @@ class EventLogging extends Component {
           </Row>
           <Row>
             <Col>
-              <EventInput className='mt-2' />
+              <EventInput className='mt-2 event-input' />
             </Col>
           </Row>
           <Row>
