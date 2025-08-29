@@ -1,10 +1,15 @@
 import React from 'react';
 import { Alert, Col, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import Datetime from 'react-datetime';
+import DOMPurify from 'dompurify';
 import moment from 'moment';
 
 export const dateFormat = "YYYY-MM-DD";
 export const timeFormat = "HH:mm:ss";
+
+const sanitize = (value) => {
+  return value ? DOMPurify.sanitize(value, { USE_PROFILES: { html: false } }) : value;
+};
 
 export function renderStaticTextField({ input, label, xs=12, sm=6, md=12, lg=6}) {
   
@@ -22,10 +27,18 @@ export function renderTextField({ input, label, placeholder, required, meta: { t
   const requiredField = (required)? <span className='text-danger'> *</span> : '';
   const labelComponent = (label)? <Form.Label htmlFor={input.name}>{label}{requiredField}</Form.Label> : null;
 
+  const sanitizedInput = {
+    ...input,
+    onChange: (event) => {
+      const sanitizedValue = sanitize(event.target.value);
+      input.onChange(sanitizedValue);
+    }
+  };
+
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg}>
       {labelComponent}
-      <Form.Control type={type} {...input} placeholder={placeholder} isInvalid={touched && (warning || error)} disabled={disabled} id={input.name} />
+      <Form.Control type={type} {...sanitizedInput} placeholder={placeholder} isInvalid={touched && (warning || error)} disabled={disabled} id={input.name} />
       <Form.Control.Feedback className={(warning) ? 'text-warning': ''} type="invalid">{error}{warning}</Form.Control.Feedback>
     </Form.Group>
   );
@@ -34,10 +47,18 @@ export function renderTextField({ input, label, placeholder, required, meta: { t
 export function renderTextArea({ input, label, placeholder, required, meta: { touched, error }, rows=4, disabled=false, xs=12, sm=12, md=12, lg=12 }) {
   let requiredField = (required)? <span className='text-danger'> *</span> : '';
 
+  const sanitizedInput = {
+    ...input,
+    onChange: (event) => {
+      const sanitizedValue = sanitize(event.target.value);
+      input.onChange(sanitizedValue);
+    }
+  };
+
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg}>
       <Form.Label htmlFor={input.name}>{label}{requiredField}</Form.Label>
-      <Form.Control as="textarea" {...input} placeholder={placeholder} isInvalid={touched && error} disabled={disabled} rows={rows} id={input.name} ref={input.ref} />
+      <Form.Control as="textarea" {...sanitizedInput} placeholder={placeholder} isInvalid={touched && error} disabled={disabled} rows={rows} id={input.name} ref={input.ref} />
       <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
     </Form.Group>
   );
