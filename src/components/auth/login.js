@@ -93,7 +93,7 @@ class Login extends Component {
     )
 
     const loginImage = LOGIN_IMAGE ? (
-      <div className='d-flex justify-content-center'>
+      <div>
         <Image style={{ width: '250px' }} fluid src={`${ROOT_PATH}images/${LOGIN_IMAGE}`} />
       </div>
     ) : null
