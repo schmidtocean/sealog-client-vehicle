@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import { compose } from 'redux'
 import { connectModal } from 'redux-modal'
-import { reduxForm, Field } from 'redux-form'
+import { formValueSelector, reduxForm, Field } from 'redux-form'
+import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import moment from 'moment'
 import {
@@ -109,10 +110,37 @@ class EventTemplateOptionsModal extends Component {
   }
 
   renderEventOptions() {
-    const { eventTemplate } = this.props
+    const { eventTemplate, formValues } = this.props
     const { event_options } = eventTemplate
 
     return event_options.map((option, index) => {
+      let visible = true
+
+      if (option.event_option_visibility) {
+        const { show_hide, event_option_name, event_option_values } = option.event_option_visibility
+
+        // find the index of controlling option
+        const controllingIndex = event_options.findIndex((o) => o.event_option_name === event_option_name)
+
+        if (controllingIndex !== -1) {
+          const controllingField = `option_${controllingIndex}`
+          const controllingValue = formValues?.[controllingField]
+
+          const matches = Array.isArray(controllingValue)
+            ? controllingValue.some((v) => event_option_values.includes(v))
+            : event_option_values.includes(controllingValue)
+
+          if (show_hide === 'show if') {
+            visible = matches
+          } else if (show_hide === 'hide if') {
+            visible = !matches
+          }
+        }
+      }
+
+      if (!visible) return null
+
+      // original rendering logic
       if (option.event_option_type === 'dropdown') {
         return (
           <div key={`event_options.option_${index}`}>
@@ -127,10 +155,7 @@ class EventTemplateOptionsModal extends Component {
           </div>
         )
       } else if (option.event_option_type === 'checkboxes') {
-        let optionList = option.event_option_values.map((option_value) => {
-          return { value: option_value, label: option_value }
-        })
-
+        let optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
         return (
           <div key={`event_options.option_${index}`}>
             <Field
@@ -138,7 +163,6 @@ class EventTemplateOptionsModal extends Component {
               component={renderCheckboxGroup}
               label={option.event_option_name}
               options={optionList}
-              indication={true}
               inline={true}
               required={option.event_option_required}
               validate={option.event_option_required ? requiredArray : undefined}
@@ -146,10 +170,7 @@ class EventTemplateOptionsModal extends Component {
           </div>
         )
       } else if (option.event_option_type === 'radio buttons') {
-        let optionList = option.event_option_values.map((option_value) => {
-          return { value: option_value, label: option_value }
-        })
-
+        let optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
         return (
           <div key={`event_options.option_${index}`}>
             <Field
@@ -157,7 +178,6 @@ class EventTemplateOptionsModal extends Component {
               component={renderRadioGroup}
               label={option.event_option_name}
               options={optionList}
-              indication={true}
               inline={true}
               required={option.event_option_required}
               validate={option.event_option_required ? requiredArray : undefined}
@@ -183,6 +203,8 @@ class EventTemplateOptionsModal extends Component {
           </div>
         )
       }
+
+      return null
     })
   }
 
@@ -234,11 +256,12 @@ EventTemplateOptionsModal.propTypes = {
   disabled: PropTypes.bool,
   event: PropTypes.object,
   eventTemplate: PropTypes.object,
-  initialize: PropTypes.func.isRequired,
+  formValues: PropTypes.object,
   handleDeleteEvent: PropTypes.func,
   handleHide: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   handleUpdateEvent: PropTypes.func,
+  initialize: PropTypes.func.isRequired,
   show: PropTypes.bool.isRequired,
   submitting: PropTypes.bool.isRequired,
   valid: PropTypes.bool.isRequired
@@ -258,10 +281,17 @@ const validate = (formProps) => {
   return errors
 }
 
+const selector = formValueSelector('eventTemplateOptionsModal')
+
+const mapStateToProps = (state) => ({
+  formValues: selector(state, 'event_options')
+})
+
 export default compose(
   connectModal({ name: 'eventOptions' }),
   reduxForm({
     form: 'eventTemplateOptionsModal',
-    validate: validate
-  })
+    validate
+  }),
+  connect(mapStateToProps)
 )(EventTemplateOptionsModal)
