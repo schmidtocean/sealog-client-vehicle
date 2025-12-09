@@ -273,6 +273,11 @@ class CreateEventTemplate extends Component {
                   lg={12}
                   sm={12}
                 />
+                <div className="col-12" style={{marginTop: '-10px', marginBottom: '10px'}}>
+                  <small className="text-muted">
+                    Button Name is not included in data
+                  </small>
+                </div>
                 <Field
                   name="event_value"
                   component={renderTextField}
