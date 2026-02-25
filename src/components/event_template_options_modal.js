@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
 import { compose } from 'redux'
 import { connectModal } from 'redux-modal'
-import { formValueSelector, reduxForm, Field } from 'redux-form'
+import { reduxForm, Field } from 'redux-form'
+import { FilePond, registerPlugin } from 'react-filepond'
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import moment from 'moment'
@@ -15,6 +17,10 @@ import {
   renderTextField
 } from './form_elements'
 import { Button, Modal } from 'react-bootstrap'
+import { authorizationHeader, IMAGE_ROUTE } from '../api'
+import { API_ROOT_URL } from '../client_settings'
+
+registerPlugin(FilePondPluginFileValidateType)
 
 const required = (value) => (!value ? 'Required' : undefined)
 const requiredArray = (value) => (!value || value.length === 0 ? 'Must select at least one option' : undefined)
@@ -95,6 +101,14 @@ class EventTemplateOptionsModal extends Component {
       }
     })
 
+    formProps.event_files = [
+      ...new Set(
+        this.pond.getFiles().map((file) => {
+          return file.filename
+        })
+      )
+    ]
+
     //Submit event
     if (this.props.event) {
       this.props.handleUpdateEvent(formProps)
@@ -119,7 +133,6 @@ class EventTemplateOptionsModal extends Component {
       if (option.event_option_visibility) {
         const { show_hide, event_option_name, event_option_values } = option.event_option_visibility
 
-        // find the index of controlling option
         const controllingIndex = event_options.findIndex((o) => o.event_option_name === event_option_name)
 
         if (controllingIndex !== -1) {
@@ -130,17 +143,19 @@ class EventTemplateOptionsModal extends Component {
             ? controllingValue.some((v) => event_option_values.includes(v))
             : event_option_values.includes(controllingValue)
 
-          if (show_hide === 'show if') {
-            visible = matches
-          } else if (show_hide === 'hide if') {
-            visible = !matches
-          }
+          visible = show_hide === 'show if' ? matches : !matches
         }
       }
 
-      if (!visible) return null
+      if (!visible) {
+        const fieldName = `event_options.option_${index}`
+        if (formValues?.[`option_${index}`] !== undefined) {
+          this.props.change(fieldName, undefined)
+        }
+        return null
+      }
 
-      // original rendering logic
+      // ✅ render normally
       if (option.event_option_type === 'dropdown') {
         return (
           <div key={`event_options.option_${index}`}>
@@ -154,8 +169,10 @@ class EventTemplateOptionsModal extends Component {
             />
           </div>
         )
-      } else if (option.event_option_type === 'checkboxes') {
-        let optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
+      }
+
+      if (option.event_option_type === 'checkboxes') {
+        const optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
         return (
           <div key={`event_options.option_${index}`}>
             <Field
@@ -163,14 +180,16 @@ class EventTemplateOptionsModal extends Component {
               component={renderCheckboxGroup}
               label={option.event_option_name}
               options={optionList}
-              inline={true}
+              inline
               required={option.event_option_required}
               validate={option.event_option_required ? requiredArray : undefined}
             />
           </div>
         )
-      } else if (option.event_option_type === 'radio buttons') {
-        let optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
+      }
+
+      if (option.event_option_type === 'radio buttons') {
+        const optionList = option.event_option_values.map((v) => ({ value: v, label: v }))
         return (
           <div key={`event_options.option_${index}`}>
             <Field
@@ -178,13 +197,15 @@ class EventTemplateOptionsModal extends Component {
               component={renderRadioGroup}
               label={option.event_option_name}
               options={optionList}
-              inline={true}
+              inline
               required={option.event_option_required}
               validate={option.event_option_required ? requiredArray : undefined}
             />
           </div>
         )
-      } else if (option.event_option_type === 'text') {
+      }
+
+      if (option.event_option_type === 'text') {
         return (
           <div key={`event_options.option_${index}`}>
             <Field
@@ -196,7 +217,9 @@ class EventTemplateOptionsModal extends Component {
             />
           </div>
         )
-      } else if (option.event_option_type === 'static text') {
+      }
+
+      if (option.event_option_type === 'static text') {
         return (
           <div key={`event_options.option_${index}`}>
             <Field name={`event_options.option_${index}`} component={renderStaticTextField} label={option.event_option_name} />
@@ -229,6 +252,27 @@ class EventTemplateOptionsModal extends Component {
                 validate={eventTemplate.event_free_text_required ? required : undefined}
                 rows={2}
               />
+              Attachments
+              <FilePond
+                ref={(ref) => (this.pond = ref)}
+                allowMultiple={true}
+                maxFiles={5}
+                acceptedFileTypes={['image/png', 'image/jpeg']}
+                server={{
+                  url: API_ROOT_URL,
+                  process: this.props.event
+                    ? {
+                        url: IMAGE_ROUTE + '/filepond/process/' + this.props.event.id,
+                        ...authorizationHeader()
+                      }
+                    : null,
+                  revert: {
+                    url: IMAGE_ROUTE + '/filepond/revert',
+                    ...authorizationHeader()
+                  }
+                }}
+                disabled={!this.props.event}
+              ></FilePond>
               <Field name='ts' label='Custom Time (UTC)' component={renderDateTimePicker} disabled={this.props.disabled} required={true} />
             </Modal.Body>
             <Modal.Footer>
@@ -281,11 +325,31 @@ const validate = (formProps) => {
   return errors
 }
 
-const selector = formValueSelector('eventTemplateOptionsModal')
+const mapStateToProps = (state) => {
+  const formState = state.form.eventTemplateOptionsModal?.values || {}
+  const eo = formState.event_options
 
-const mapStateToProps = (state) => ({
-  formValues: selector(state, 'event_options')
-})
+  // Normalize event_options to always be an object like:
+  // { option_0: value, option_1: value, ... }
+  let formValues = {}
+
+  if (Array.isArray(eo)) {
+    // Convert array → object
+    eo.forEach((v, i) => {
+      formValues[`option_${i}`] = v
+    })
+  } else if (eo && typeof eo === 'object') {
+    // Already an object → use as-is
+    formValues = eo
+  } else {
+    // undefined/null → empty object
+    formValues = {}
+  }
+
+  return {
+    formValues
+  }
+}
 
 export default compose(
   connectModal({ name: 'eventOptions' }),
