@@ -155,7 +155,7 @@ class ReviewGallery extends Component {
                 {imgCountOptions}
               </Form.Select>
             </Form.Group>
-            <span className='me-2 text-primary float-end' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
+            <span className='me-2 text-primary float-end clickable' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
               {this.props.event.hideASNAP ? 'Show ASNAP' : 'Hide ASNAP'}
             </span>
           </span>
