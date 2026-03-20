@@ -156,6 +156,11 @@ button.btn-template {
 .event-image-data-card {
   border-color: $secondary;
   font-size: .8rem;
+  cursor: pointer;
+}
+
+.event-image-data-card:hover {
+  opacity: 0.7;
 }
 
 .event-input {
