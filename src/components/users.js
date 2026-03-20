@@ -221,20 +221,38 @@ class Users extends Component {
     return userList.map((user) => {
       const edit_icon = this.props.roles.some((item) => edit_roles.includes(item)) ? (
         <OverlayTrigger placement='top' overlay={editTooltip}>
-          <FontAwesomeIcon className='text-warning' onClick={() => this.handleUserSelect(user.id)} icon='pencil-alt' fixedWidth />
+          <FontAwesomeIcon
+            className='text-warning'
+            onClick={() => this.handleUserSelect(user.id)}
+            icon='pencil-alt'
+            fixedWidth
+            role='button'
+          />
         </OverlayTrigger>
       ) : null
 
       const jwt_icon = this.props.roles.includes('admin') ? (
         <OverlayTrigger placement='top' overlay={tokenTooltip}>
-          <FontAwesomeIcon className='text-success' onClick={() => this.handleDisplayUserToken(user.id)} icon='eye' fixedWidth />
+          <FontAwesomeIcon
+            className='text-success'
+            onClick={() => this.handleDisplayUserToken(user.id)}
+            icon='eye'
+            fixedWidth
+            role='button'
+          />
         </OverlayTrigger>
       ) : null
 
       const delete_icon =
         user.id !== this.props.profileid && !disabledAccounts.includes(user.username) ? (
           <OverlayTrigger placement='top' overlay={deleteTooltip}>
-            <FontAwesomeIcon className='text-danger' onClick={() => this.handleUserDelete(user.id)} icon='trash' fixedWidth />
+            <FontAwesomeIcon
+              className='text-danger'
+              onClick={() => this.handleUserDelete(user.id)}
+              icon='trash'
+              fixedWidth
+              role='button'
+            />
           </OverlayTrigger>
         ) : null
 
@@ -246,6 +264,7 @@ class Users extends Component {
               onClick={() => this.handleUserPermissionsModal(user.id)}
               icon='user-lock'
               fixedWidth
+              role='button'
             />
           </OverlayTrigger>
         ) : null
@@ -302,6 +321,7 @@ class Users extends Component {
             disabled={disableBtn}
             icon='download'
             fixedWidth
+            role='button'
           />
         </OverlayTrigger>
         {!system ? (
@@ -312,6 +332,7 @@ class Users extends Component {
               disabled={disableBtn}
               icon='trash'
               fixedWidth
+              role='button'
             />
           </OverlayTrigger>
         ) : null}

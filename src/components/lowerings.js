@@ -247,7 +247,13 @@ class Lowerings extends Component {
       if (index >= (this.state.activePage - 1) * maxLoweringsPerPage && index < this.state.activePage * maxLoweringsPerPage) {
         let editLink = (
           <OverlayTrigger placement='top' overlay={editTooltip}>
-            <FontAwesomeIcon className='text-warning' onClick={() => this.handleLoweringUpdate(lowering.id)} icon='pencil-alt' fixedWidth />
+            <FontAwesomeIcon
+              className='text-warning'
+              onClick={() => this.handleLoweringUpdate(lowering.id)}
+              icon='pencil-alt'
+              fixedWidth
+              role='button'
+            />
           </OverlayTrigger>
         )
 
@@ -259,19 +265,32 @@ class Lowerings extends Component {
                 onClick={() => this.handleLoweringPermissionsModal(lowering)}
                 icon='user-lock'
                 fixedWidth
+                role='button'
               />
             </OverlayTrigger>
           ) : null
 
         let deleteLink = this.props.roles.includes('admin') ? (
           <OverlayTrigger placement='top' overlay={deleteTooltip}>
-            <FontAwesomeIcon className='text-danger' onClick={() => this.handleLoweringDeleteModal(lowering.id)} icon='trash' fixedWidth />
+            <FontAwesomeIcon
+              className='text-danger'
+              onClick={() => this.handleLoweringDeleteModal(lowering.id)}
+              icon='trash'
+              fixedWidth
+              role='button'
+            />
           </OverlayTrigger>
         ) : null
 
         let exportLink = this.props.roles.includes('admin') ? (
           <OverlayTrigger placement='top' overlay={exportTooltip}>
-            <FontAwesomeIcon className='text-info' onClick={() => this.handleLoweringExportModal(lowering)} icon='download' fixedWidth />
+            <FontAwesomeIcon
+              className='text-info'
+              onClick={() => this.handleLoweringExportModal(lowering)}
+              icon='download'
+              fixedWidth
+              role='button'
+            />
           </OverlayTrigger>
         ) : null
 
@@ -282,6 +301,7 @@ class Lowerings extends Component {
               onClick={() => (lowering.lowering_hidden ? this.handleLoweringShow(lowering.id) : this.handleLoweringHide(lowering.id))}
               icon={lowering.lowering_hidden ? 'eye-slash' : 'eye'}
               fixedWidth
+              role='button'
             />
           </OverlayTrigger>
         ) : null
@@ -350,6 +370,7 @@ class Lowerings extends Component {
             onClick={() => this.exportLoweringsToJSON()}
             icon='download'
             fixedWidth
+            role='button'
           />
         </OverlayTrigger>
         <Form className='float-end me-2'>
