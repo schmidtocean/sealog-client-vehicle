@@ -315,14 +315,14 @@ class EventHistory extends Component {
 
         eventArray.push(
           <ListGroup.Item key={event.id} className='event-list-item d-flex justify-content-between'>
-            <div onClick={() => this.handleEventShowDetailsModal(event)} className="event-list-item-summary">
+            <div onClick={() => this.handleEventShowDetailsModal(event)} className='event-list-item-summary'>
               {event.ts}{' '}
               <b>
                 <i>{event.event_author}</i>
               </b>
               : {event.event_value} {eventOptions ? <FontAwesomeIcon icon='arrow-right' fixedWidth /> : null} {eventOptions}
             </div>
-            <div role="button">{commentTooltip}</div>
+            <div role='button'>{commentTooltip}</div>
           </ListGroup.Item>
         )
       }

@@ -246,13 +246,7 @@ class Users extends Component {
       const delete_icon =
         user.id !== this.props.profileid && !disabledAccounts.includes(user.username) ? (
           <OverlayTrigger placement='top' overlay={deleteTooltip}>
-            <FontAwesomeIcon
-              className='text-danger'
-              onClick={() => this.handleUserDelete(user.id)}
-              icon='trash'
-              fixedWidth
-              role='button'
-            />
+            <FontAwesomeIcon className='text-danger' onClick={() => this.handleUserDelete(user.id)} icon='trash' fixedWidth role='button' />
           </OverlayTrigger>
         ) : null
 

@@ -246,7 +246,9 @@ class CruiseMenu extends Component {
                 <Col
                   key={`select_${lowering.id}`}
                   className={
-                    (this.state.activeLowering && lowering.id === this.state.activeLowering.id ? 'text-warning ms-2' : 'text-primary ms-2') + ' clickable'
+                    (this.state.activeLowering && lowering.id === this.state.activeLowering.id
+                      ? 'text-warning ms-2'
+                      : 'text-primary ms-2') + ' clickable'
                   }
                   onClick={() => this.handleLoweringSelect(lowering.id)}
                 >
@@ -441,13 +443,18 @@ class CruiseMenu extends Component {
     if (this.state.yearCruises) {
       Object.entries(this.state.yearCruises).forEach(([year, cruises]) => {
         let yearTxt = (
-          <span className={(year == this.state.activeYear || this.state.years.size == 1 ? 'text-warning' : 'text-primary') + ' clickable'}>{year}</span>
+          <span className={(year == this.state.activeYear || this.state.years.size == 1 ? 'text-warning' : 'text-primary') + ' clickable'}>
+            {year}
+          </span>
         )
         let yearCruises = cruises.map((cruise) => {
           return (
             <div
               key={`select_${cruise.id}`}
-              className={(this.state.activeCruise && cruise.id === this.state.activeCruise.id ? 'ms-2 text-warning' : 'ms-2 text-primary') + ' clickable'}
+              className={
+                (this.state.activeCruise && cruise.id === this.state.activeCruise.id ? 'ms-2 text-warning' : 'ms-2 text-primary') +
+                ' clickable'
+              }
               onClick={() => this.handleCruiseSelect(cruise.id)}
             >
               {cruise.cruise_id}

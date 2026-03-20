@@ -290,7 +290,13 @@ class EventManagement extends Component {
         )
 
         let deleteIcon = (
-          <FontAwesomeIcon className={'text-danger me-1'} onClick={() => this.handleEventDeleteModal(event)} icon='trash' fixedWidth role='button' />
+          <FontAwesomeIcon
+            className={'text-danger me-1'}
+            onClick={() => this.handleEventDeleteModal(event)}
+            icon='trash'
+            fixedWidth
+            role='button'
+          />
         )
         let deleteTooltip =
           this.props.roles && this.props.roles.some((role) => ['admin', 'event_manager'].includes(role)) ? (
@@ -301,7 +307,7 @@ class EventManagement extends Component {
 
         return (
           <ListGroup.Item key={event.id} className='event-list-item d-flex justify-content-between'>
-            <div onClick={() => this.handleEventShowDetailsModal(event)} className="event-list-item-summary">
+            <div onClick={() => this.handleEventShowDetailsModal(event)} className='event-list-item-summary'>
               {event.ts}{' '}
               <b>
                 <i>{event.event_author}</i>
