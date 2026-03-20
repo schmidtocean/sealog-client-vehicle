@@ -171,10 +171,19 @@ button.btn-template {
   color: $gray-300
 }
 
+.event-list-item:hover {
+  background-color: inherit;
+}
+
 .event-list-item.active {
   background-color: inherit;
   color: var(--bs-primary);
   border: none;
+}
+
+.event-list-item-summary {
+  width: 100%;
+  cursor: pointer;
 }
 
 tbody {
