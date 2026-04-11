@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] - 2026-04-11
+
+### Fixed
+- **Event exports scoped to current lowering** — `ExportDropdown` in the review replay view was passing `cruiseID` instead of `loweringID`, causing exports to return all events across the cruise rather than just the current lowering
+- **Event comment not saved without file attachments** — submitting a comment in the event comment modal returned early before calling `handleUpdateEvent` when no file attachments were present, silently discarding the comment
+
+### UI
+- **Clickable elements styled as interactive** — elements with `onClick` handlers now show a pointer cursor; icons acting as buttons carry `role="button"`; event list rows extend the click target to the full row width including the comment icon; event image cards show reduced opacity on hover
+
+### Security
+- Removed underline-on-hover from clickable elements to match design intent
+
+### Internal
+- Updated `babel-loader` to v10, `eslint-config-prettier` to v10, `sass-loader` to v16, and `webpack-cli` to v7
+- Switched `sass-loader` to modern Sass API (`api: 'modern'`)
+- Renamed `--node-env` to `--config-node-env` in npm scripts to match webpack-cli v7
+
 ## [2.4.2] - 2026-04-10
 
 ### Added
