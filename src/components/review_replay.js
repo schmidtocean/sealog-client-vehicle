@@ -367,8 +367,8 @@ class ReviewReplay extends Component {
             disabled={this.props.event.fetching}
             hideASNAP={this.props.event.hideASNAP}
             eventFilter={this.props.event.eventFilter}
-            cruiseID={this.props.cruise.id}
-            prefix={this.props.cruise.cruise_id}
+            loweringID={this.props.lowering.id}
+            prefix={this.props.lowering.lowering_id}
           />
         </span>
       </div>
