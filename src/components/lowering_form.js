@@ -199,6 +199,7 @@ class LoweringForm extends Component {
                   }
                 }}
                 onupdatefiles={() => {
+                  this.setState({ filepondPristine: false })
                   this.props.dispatch(change('editLowering', 'lowering_additional_meta.lowering_files', true))
                 }}
                 disabled={this.props.lowering.id ? false : true}
