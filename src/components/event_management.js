@@ -169,7 +169,7 @@ class EventManagement extends Component {
       <div>
         {Label}
         <span className='float-end'>
-          <span className='me-2 text-primary' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
+          <span className='me-2 text-primary clickable' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
             {this.state.hideASNAP ? 'Show ASNAP' : 'Hide ASNAP'}
           </span>
           <ExportDropdown
@@ -202,9 +202,9 @@ class EventManagement extends Component {
         }
         let eventOptions = eventOptionsArray.length > 0 ? eventOptionsArray.join(', ') : ''
         let commentIcon = comment_exists ? (
-          <FontAwesomeIcon onClick={() => this.handleEventCommentModal(event)} icon='comment' fixedWidth transform='grow-4' />
+          <FontAwesomeIcon onClick={() => this.handleEventCommentModal(event)} icon='comment' fixedWidth transform='grow-4' role='button' />
         ) : (
-          <span onClick={() => this.handleEventCommentModal(event)} className='fa-layers fa-fw'>
+          <span onClick={() => this.handleEventCommentModal(event)} className='fa-layers fa-fw' role='button'>
             <FontAwesomeIcon icon='comment' fixedWidth transform='grow-4' />
             <FontAwesomeIcon inverse icon='plus' style={{ color: 'var(--bs-black' }} fixedWidth transform='shrink-4' />
           </span>
@@ -220,7 +220,13 @@ class EventManagement extends Component {
         )
 
         let deleteIcon = (
-          <FontAwesomeIcon className={'text-danger me-1'} onClick={() => this.handleEventDeleteModal(event)} icon='trash' fixedWidth />
+          <FontAwesomeIcon
+            className={'text-danger me-1'}
+            onClick={() => this.handleEventDeleteModal(event)}
+            icon='trash'
+            fixedWidth
+            role='button'
+          />
         )
         let deleteTooltip =
           this.props.roles && this.props.roles.some((role) => ['admin', 'event_manager'].includes(role)) ? (
@@ -231,7 +237,7 @@ class EventManagement extends Component {
 
         return (
           <ListGroup.Item key={event.id} className='event-list-item d-flex justify-content-between'>
-            <div onClick={() => this.handleEventShowDetailsModal(event)}>
+            <div onClick={() => this.handleEventShowDetailsModal(event)} className='event-list-item-summary'>
               {event.ts}{' '}
               <b>
                 <i>{event.event_author}</i>

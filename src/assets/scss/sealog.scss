@@ -156,6 +156,11 @@ button.btn-template {
 .event-image-data-card {
   border-color: $secondary;
   font-size: .8rem;
+  cursor: pointer;
+}
+
+.event-image-data-card:hover {
+  opacity: 0.7;
 }
 
 .event-input {
@@ -171,10 +176,19 @@ button.btn-template {
   color: $gray-300
 }
 
+.event-list-item:hover {
+  background-color: inherit;
+}
+
 .event-list-item.active {
   background-color: inherit;
   color: var(--bs-primary);
   border: none;
+}
+
+.event-list-item-summary {
+  width: 100%;
+  cursor: pointer;
 }
 
 tbody {
@@ -322,3 +336,9 @@ td.rdtYear:hover {
   background: $body-bg;
   color: $info;
 }
+
+.clickable {
+  cursor: pointer;
+}
+
+

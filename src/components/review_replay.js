@@ -277,6 +277,7 @@ class ReviewReplay extends Component {
             key={`pause_${this.props.cruise.id}`}
             onClick={() => this.handleReviewReplayPause()}
             icon='pause'
+            role='button'
           />
         ) : (
           <FontAwesomeIcon
@@ -284,6 +285,7 @@ class ReviewReplay extends Component {
             key={`play_${this.props.cruise.id}`}
             onClick={() => this.handleReviewReplayPlay()}
             icon='play'
+            role='button'
           />
         )
 
@@ -295,12 +297,14 @@ class ReviewReplay extends Component {
               key={`start_${this.props.cruise.id}`}
               onClick={() => this.handleReviewReplayStart()}
               icon='step-backward'
+              role='button'
             />{' '}
             <FontAwesomeIcon
               className='text-primary'
               key={`frev_${this.props.cruise.id}`}
               onClick={() => this.handleReviewReplayFRev()}
               icon='backward'
+              role='button'
             />{' '}
             {playPause}{' '}
             <FontAwesomeIcon
@@ -308,12 +312,14 @@ class ReviewReplay extends Component {
               key={`ffwd_${this.props.cruise.id}`}
               onClick={() => this.handleReviewReplayFFwd()}
               icon='forward'
+              role='button'
             />{' '}
             <FontAwesomeIcon
               className='text-primary'
               key={`end_${this.props.cruise.id}`}
               onClick={() => this.handleReviewReplayEnd()}
               icon='step-forward'
+              role='button'
             />
           </span>
         ) : (
@@ -353,7 +359,7 @@ class ReviewReplay extends Component {
       <div>
         Filtered Events
         <span className='float-end'>
-          <span className='me-2 text-primary' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
+          <span className='me-2 text-primary clickable' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
             {this.props.event.hideASNAP ? 'Show ASNAP' : 'Hide ASNAP'}
           </span>
           <ExportDropdown
@@ -393,11 +399,17 @@ class ReviewReplay extends Component {
 
           let eventComment = comment_exists ? (
             <OverlayTrigger placement='left' overlay={<Tooltip id={`commentTooltip_${event.id}`}>Edit/View Comment</Tooltip>}>
-              <FontAwesomeIcon onClick={() => this.handleEventCommentModal(index)} icon='comment' fixedWidth transform='grow-4' />
+              <FontAwesomeIcon
+                onClick={() => this.handleEventCommentModal(index)}
+                icon='comment'
+                fixedWidth
+                transform='grow-4'
+                role='button'
+              />
             </OverlayTrigger>
           ) : (
             <OverlayTrigger placement='top' overlay={<Tooltip id={`commentTooltip_${event.id}`}>Add Comment</Tooltip>}>
-              <span onClick={() => this.handleEventCommentModal(index)} className='fa-layers fa-fw'>
+              <span onClick={() => this.handleEventCommentModal(index)} className='fa-layers fa-fw' role='button'>
                 <FontAwesomeIcon icon='comment' fixedWidth transform='grow-4' />
                 <FontAwesomeIcon
                   style={active ? { color: 'var(--bs-gray-700' } : { color: 'var(--bs-gray-800' }}
@@ -411,7 +423,7 @@ class ReviewReplay extends Component {
 
           return (
             <ListGroup.Item key={event.id} className='event-list-item d-flex justify-content-between' active={active}>
-              <div onClick={() => this.handleEventClick(index)}>
+              <div onClick={() => this.handleEventClick(index)} className='event-list-item-summary'>
                 {event.ts}{' '}
                 <b>
                   <i>{event.event_author}</i>
