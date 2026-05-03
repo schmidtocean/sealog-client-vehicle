@@ -1,9 +1,9 @@
 // Import Custom Bootswatch Mixins and Components
 @import "variables.scss";
 
-// sealog-emp overrides
+// sealog-emp overrides 
 $body-bg: #363636;
-$navbar-dark-color: #FF8800;
+$navbar-dark-brand-color: #FF8800;
 
 // Import Bootstrap
 @import "~bootstrap/scss/bootstrap.scss";
