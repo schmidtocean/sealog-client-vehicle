@@ -54,11 +54,11 @@ class CopyLoweringToClipboard extends Component {
 
       let text = "";
 
-      text += `${this.state.lowering_name} ID:${' '.repeat(9-this.state.lowering_name.length)}${this.props.lowering.lowering_id}\n`;
+      text += `${this.state.lowering_name} ID:${' '.repeat(Math.max(9-this.state.lowering_name.length, 1))}${this.props.lowering.lowering_id}\n`;
       text += (this.props.lowering.lowering_additional_meta.lowering_description) ? `Description: ${this.props.lowering.lowering_additional_meta.lowering_description}\n` : "";
       text += `Location: ${this.props.lowering.lowering_location}\n`;
       text += '\n';
-      text += `Start of ${this.state.lowering_name}:${' '.repeat(9-this.state.lowering_name.length)}${this.props.lowering.start_ts}\n`;
+      text += `Start of ${this.state.lowering_name}:${' '.repeat(Math.max(9-this.state.lowering_name.length, 1))}${this.props.lowering.start_ts}\n`;
       text += (loweringDescendingTime) ? `Descending:        ${this.props.lowering.lowering_additional_meta.milestones.lowering_descending}\n` : "";
       text += (loweringOnBottomTime) ? `On Bottom:         ${this.props.lowering.lowering_additional_meta.milestones.lowering_on_bottom}\n` : "";
       text += (loweringOffBottomTime) ? `Off Bottom:        ${this.props.lowering.lowering_additional_meta.milestones.lowering_off_bottom}\n` : "";
