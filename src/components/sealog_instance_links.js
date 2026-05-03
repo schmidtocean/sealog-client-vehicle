@@ -32,11 +32,15 @@ const instanceLinks = {
     image: 'emp.png',
     label: 'Empress Sealog'
   },
-  sub: {
+  fkt: {
     href: '/sealog-fkt',
     image: 'fkt.png',
     label: 'Falkor(too) Sealog'
-  }
+  },
+  sub: {
+    href: '/sealog-sub',
+    image: 'sub.png',
+    label: 'SuBastian Sealog'}
 };
 
 const rootHref = (path) => {
