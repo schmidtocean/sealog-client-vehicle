@@ -33,9 +33,9 @@ const instanceLinks = {
     label: 'Empress Sealog'
   },
   sub: {
-    href: '/sealog-sub',
-    image: 'sub.png',
-    label: 'Subastian Sealog'
+    href: '/sealog-fkt',
+    image: 'fkt.png',
+    label: 'Falkor(too) Sealog'
   }
 };
 
@@ -73,8 +73,8 @@ const SealogInstanceLink = ({ instance, style }) => (
 
 const SealogInstanceLinks = () => (
   <>
-    <SealogInstanceLink instance={instanceLinks.sub} style={{ left: 0 }} />
-    <SealogInstanceLink instance={instanceLinks.fkt} style={{ right: 0 }} />
+    <SealogInstanceLink instance={instanceLinks.fkt} style={{ left: 0 }} />
+    <SealogInstanceLink instance={instanceLinks.emp} style={{ right: 0 }} />
   </>
 );
 
