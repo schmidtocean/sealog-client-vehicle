@@ -7,6 +7,7 @@ import { Button, Form, Card } from 'react-bootstrap';
 import { renderAlert, renderMessage, renderSelectField, renderSwitch, renderTextField, renderTextArea } from './form_elements';
 import * as mapDispatchToProps from '../actions';
 import { EventTemplateOptionTypes } from '../event_template_option_types';
+import { UPDATE_EVENT_TEMPLATE_SUCCESS } from '../actions/types';
 
 class UpdateEventTemplate extends Component {
 
@@ -27,7 +28,7 @@ class UpdateEventTemplate extends Component {
     this.props.leaveUpdateEventTemplateForm();
   }
 
-  handleFormSubmit(formProps) {
+  async handleFormSubmit(formProps) {
     if(typeof formProps.system_template === 'undefined') {
       formProps.system_template = false;
     }
@@ -47,8 +48,11 @@ class UpdateEventTemplate extends Component {
       });
     }    
 
-    this.props.updateEventTemplate(formProps);
-    this.props.fetchEventTemplates();
+    const result = await this.props.updateEventTemplate(formProps);
+
+    if(result && result.type === UPDATE_EVENT_TEMPLATE_SUCCESS) {
+      this.props.initEventTemplate(formProps.id);
+    }
   }
 
   renderOptionOptions(prefix, index) {
@@ -302,7 +306,7 @@ class UpdateEventTemplate extends Component {
               </Form.Row>
               <FieldArray name="event_options" component={this.renderOptions}/>
               {renderAlert(this.props.errorMessage)}
-              {renderMessage(this.props.message)}
+              {pristine && renderMessage(this.props.message)}
               <div className="float-right">
                 <Button className="mr-1" variant="secondary" size="sm" disabled={pristine || submitting} onClick={reset}>Reset Form</Button>
                 <Button variant="primary" size="sm" type="submit" disabled={pristine || submitting || !valid}>Update</Button>
