@@ -6,6 +6,7 @@ import prettyBytes from 'pretty-bytes';
 import { WS_ROOT_URL, DISABLE_EVENT_LOGGING } from '../client_config';
 
 import * as mapDispatchToProps from '../actions';
+import SealogInstanceLinks from './sealog_instance_links';
 
 class Footer extends Component {
 
@@ -124,6 +125,7 @@ class Footer extends Component {
 
     return (
       <div className="mt-2 justify-content-center">
+        <SealogInstanceLinks />
         {asnapStatus}
         {freeSpaceStatus}
         <span className="float-right">
