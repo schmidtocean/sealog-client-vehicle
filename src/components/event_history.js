@@ -340,7 +340,7 @@ class EventHistory extends Component {
         return (
           tmpData.map((camera) => {
             return (
-              <Col className="px-1 mb-2" key={camera.source} xs={12} sm={6} md={4} lg={3}>
+              <Col className="px-1 mb-2" key={camera.source} xs={12} sm={6} md={6} lg={6}>
                 {this.renderImage(camera.source, camera.filepath)}
               </Col>
             )
