@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { connect } from 'react-redux';
+import debounce from 'lodash/debounce';
 import { Button, ListGroup, Image, Card, Tooltip, OverlayTrigger, Row, Col, Form, FormControl } from 'react-bootstrap';
 import ImagePreviewModal from './image_preview_modal';
 import CoordinateFormatCycler from './coord_format_cycler';
@@ -17,6 +18,8 @@ const cookies = new Cookies();
 const excludeAuxDataSources = ['vehicleRealtimeFramegrabberData'];
 
 const imageAuxDataSources = ['vehicleRealtimeFramegrabberData'];
+
+const CAMERA_STATUS_REFRESH_MS = 60000;
 
 function getCameraStatusUrl(source) {
   const normalizedSource = `${source}`.toLowerCase();
@@ -55,6 +58,7 @@ class EventHistory extends Component {
       cameraStatuses: {}
     };
 
+    this.debouncedCameraStatusFetches = {};
     this.client = new Client(`${WS_ROOT_URL}`);
     this.connectToWS = this.connectToWS.bind(this);
     this.handleSearchChange = this.handleSearchChange.bind(this);
@@ -99,6 +103,8 @@ class EventHistory extends Component {
   }
 
   componentWillUnmount() {
+    Object.values(this.debouncedCameraStatusFetches).forEach((debouncedFetch) => debouncedFetch.cancel());
+
     if(this.props.authenticated) {
       this.client.disconnect();
     }
@@ -328,13 +334,7 @@ class EventHistory extends Component {
     this.props.showModal('imagePreview', { name: source, filepath: filepath })
   }
 
-  async fetchCameraStatus(source) {
-    const statusUrl = getCameraStatusUrl(source);
-
-    if(!statusUrl) {
-      return;
-    }
-
+  async fetchCameraStatus(statusUrl) {
     try {
       const response = await fetch(statusUrl, { cache: 'no-store' });
 
@@ -345,25 +345,45 @@ class EventHistory extends Component {
       const cameraStatus = await response.json();
 
       this.setState((prevState) => ({
-        cameraStatuses: { ...prevState.cameraStatuses, [source]: cameraStatus }
+        cameraStatuses: { ...prevState.cameraStatuses, [statusUrl]: cameraStatus }
       }));
     }
     catch {
       this.setState((prevState) => ({
-        cameraStatuses: { ...prevState.cameraStatuses, [source]: false }
+        cameraStatuses: { ...prevState.cameraStatuses, [statusUrl]: false }
       }));
     }
   }
 
+  debounceCameraStatusFetch(source) {
+    const statusUrl = getCameraStatusUrl(source);
+
+    if(!statusUrl) {
+      return;
+    }
+
+    if(!this.debouncedCameraStatusFetches[statusUrl]) {
+      this.debouncedCameraStatusFetches[statusUrl] = debounce(
+        () => this.fetchCameraStatus(statusUrl),
+        CAMERA_STATUS_REFRESH_MS,
+        { leading: true, trailing: true, maxWait: CAMERA_STATUS_REFRESH_MS }
+      );
+    }
+
+    this.debouncedCameraStatusFetches[statusUrl]();
+  }
+
   renderCameraStatus(source) {
-    if(!getCameraStatusUrl(source)) {
+    const statusUrl = getCameraStatusUrl(source);
+
+    if(!statusUrl) {
       return null;
     }
 
-    const cameraStatus = this.state.cameraStatuses[source];
+    const cameraStatus = this.state.cameraStatuses[statusUrl];
 
     if(cameraStatus === false) {
-      return <span className="text-warning">STATUS N/A</span>;
+      return <span className="text-danger">STATUS N/A</span>;
     }
 
     if(!cameraStatus) {
@@ -373,14 +393,14 @@ class EventHistory extends Component {
     return (cameraStatus.rec_state) ? (
       <span className="text-success">REC</span>
     ) : (
-      <span className="text-warning">REC OFF</span>
+      <span className="text-danger">REC OFF</span>
     );
   }
 
   renderImage(source, filepath) {
     return (
       <Card className="event-image-data-card" id={`image_${source}`}>
-          <Image fluid onError={handleMissingImage} onLoad={ () => this.fetchCameraStatus(source) } src={filepath} className="pseudo-link" onClick={ () => this.handleImagePreviewModal(source, filepath)} />
+          <Image fluid onError={handleMissingImage} onLoad={ () => this.debounceCameraStatusFetch(source) } src={filepath} className="pseudo-link" onClick={ () => this.handleImagePreviewModal(source, filepath)} />
           <span className="d-flex justify-content-between"><span>{source}</span>{this.renderCameraStatus(source)}</span>
       </Card>
     )
