@@ -20,13 +20,14 @@ const imageAuxDataSources = ['vehicleRealtimeFramegrabberData'];
 
 function getCameraStatusUrl(source) {
   const normalizedSource = `${source}`.toLowerCase();
+  const cameraStatusUrls = CAMERA_STATUS_URLS || {};
 
   if(normalizedSource.includes('scicam')) {
-    return CAMERA_STATUS_URLS.scicam;
+    return cameraStatusUrls.scicam || null;
   }
 
   if(normalizedSource.includes('sitcam')) {
-    return CAMERA_STATUS_URLS.sitcam;
+    return cameraStatusUrls.sitcam || null;
   }
 
   return null;

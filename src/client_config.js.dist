@@ -20,6 +20,12 @@ const ROOT_PATH = "/sealog-sub/";
 // Where the images are hosted on the webserver.
 const IMAGE_PATH = "/files/images";
 
+// DVR status endpoints for event history camera labels.
+const CAMERA_STATUS_URLS = {
+  scicam: 'http://10.23.46.60/dvr/scicam.json',
+  sitcam: 'http://10.23.46.61/dvr/sitcam.json'
+};
+
 // Site customization
 // Add a reCaptcha site kit to enable recaptcha bot protection
 const RECAPTCHA_SITE_KEY = "";
@@ -73,6 +79,7 @@ module.exports = {
   WS_ROOT_URL,
   ROOT_PATH,
   IMAGE_PATH,
+  CAMERA_STATUS_URLS,
   RECAPTCHA_SITE_KEY,
   LOGIN_SCREEN_TXT,
   LOGIN_IMAGE,
