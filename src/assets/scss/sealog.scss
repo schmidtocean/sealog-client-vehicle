@@ -41,6 +41,15 @@ $navbar-dark-brand-color: #FF8800;
   }
 }
 
+.btn-primary {
+  background-color: #ea7405ed;
+  border-color: black;
+
+  &:hover {
+    background-color: rgb(234 116 5);
+    border-color: black;
+  }
+}
 .btn-template {
   font-size: .85rem;
 }
