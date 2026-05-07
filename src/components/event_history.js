@@ -9,7 +9,7 @@ import { Client } from '@hapi/nes/lib/client';
 import axios from 'axios';
 import Cookies from 'universal-cookie';
 
-import { WS_ROOT_URL, API_ROOT_URL } from '../client_config';
+import { WS_ROOT_URL, API_ROOT_URL, CAMERA_STATUS_URLS } from '../client_config';
 import { getImageUrl, handleMissingImage } from '../utils';
 
 const cookies = new Cookies();
@@ -17,6 +17,20 @@ const cookies = new Cookies();
 const excludeAuxDataSources = ['vehicleRealtimeFramegrabberData'];
 
 const imageAuxDataSources = ['vehicleRealtimeFramegrabberData'];
+
+function getCameraStatusUrl(source) {
+  const normalizedSource = `${source}`.toLowerCase();
+
+  if(normalizedSource.includes('scicam')) {
+    return CAMERA_STATUS_URLS.scicam;
+  }
+
+  if(normalizedSource.includes('sitcam')) {
+    return CAMERA_STATUS_URLS.sitcam;
+  }
+
+  return null;
+}
 
 const sortAuxDataSourceReference = ['vehicleRealtimeNavData','vesselRealtimeNavData','vehicleRealtimeCTDData','vehicleRealtimeO2Data','vehicleRealtimeParoData','vehicleRealtimePHData'];
 
@@ -36,7 +50,8 @@ class EventHistory extends Component {
       showEventHistory: true,
       showEventHistoryFullscreen: false,
       filterTimer: null,
-      filter: ''
+      filter: '',
+      cameraStatuses: {}
     };
 
     this.client = new Client(`${WS_ROOT_URL}`);
@@ -312,11 +327,60 @@ class EventHistory extends Component {
     this.props.showModal('imagePreview', { name: source, filepath: filepath })
   }
 
+  async fetchCameraStatus(source) {
+    const statusUrl = getCameraStatusUrl(source);
+
+    if(!statusUrl) {
+      return;
+    }
+
+    try {
+      const response = await fetch(statusUrl, { cache: 'no-store' });
+
+      if(!response.ok) {
+        throw new Error(`Unable to fetch camera status: ${response.status}`);
+      }
+
+      const cameraStatus = await response.json();
+
+      this.setState((prevState) => ({
+        cameraStatuses: { ...prevState.cameraStatuses, [source]: cameraStatus }
+      }));
+    }
+    catch {
+      this.setState((prevState) => ({
+        cameraStatuses: { ...prevState.cameraStatuses, [source]: false }
+      }));
+    }
+  }
+
+  renderCameraStatus(source) {
+    if(!getCameraStatusUrl(source)) {
+      return null;
+    }
+
+    const cameraStatus = this.state.cameraStatuses[source];
+
+    if(cameraStatus === false) {
+      return <span className="text-warning">STATUS N/A</span>;
+    }
+
+    if(!cameraStatus) {
+      return null;
+    }
+
+    return (cameraStatus.rec_state) ? (
+      <span className="text-success">REC</span>
+    ) : (
+      <span className="text-warning">REC OFF</span>
+    );
+  }
+
   renderImage(source, filepath) {
     return (
       <Card className="event-image-data-card" id={`image_${source}`}>
-          <Image fluid onError={handleMissingImage} src={filepath} className="pseudo-link" onClick={ () => this.handleImagePreviewModal(source, filepath)} />
-          <span>{source}</span>
+          <Image fluid onError={handleMissingImage} onLoad={ () => this.fetchCameraStatus(source) } src={filepath} className="pseudo-link" onClick={ () => this.handleImagePreviewModal(source, filepath)} />
+          <span className="d-flex justify-content-between"><span>{source}</span>{this.renderCameraStatus(source)}</span>
       </Card>
     )
   }
