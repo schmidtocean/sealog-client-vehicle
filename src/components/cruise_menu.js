@@ -8,7 +8,7 @@ import { Accordion, Button, Row, Col, Card, OverlayTrigger, Tooltip } from 'reac
 import FileDownload from 'js-file-download';
 import CopyLoweringToClipboard from './copy_lowering_to_clipboard';
 import CopyCruiseToClipboard from './copy_cruise_to_clipboard';
-import StatsForROVTeamModal from './stats_for_rov_team_modal';
+import CruiseMetricsModal from './cruise_metrics_modal';
 import SVProfileModal from './sv_profile_modal';
 import { API_ROOT_URL, MAIN_SCREEN_HEADER, MAIN_SCREEN_TXT, CUSTOM_CRUISE_NAME, CUSTOM_LOWERING_NAME } from '../client_config';
 import * as mapDispatchToProps from '../actions';
@@ -208,8 +208,8 @@ class CruiseMenu extends Component {
     return <div>{output}<br/></div>;
   }
 
-  handleStatsForROVTeamModal(cruise) {
-    this.props.showModal('statsForROVTeam', { cruise: cruise });
+  handleCruiseMetricsModal(cruise) {
+    this.props.showModal('cruiseMetrics', { cruise: cruise });
   }
 
   handleSVProfileModal(lowering) {
@@ -313,7 +313,7 @@ class CruiseMenu extends Component {
 
       return (          
         <Card className="border-secondary" key={`cruise_${this.state.activeCruise.cruise_id}`}>
-          <Card.Header>{this.state.cruise_name}: <span className="text-warning">{this.state.activeCruise.cruise_id}</span><span className="float-right"><span onClick={() => this.handleStatsForROVTeamModal(this.state.activeCruise)}><OverlayTrigger placement="top" overlay={<Tooltip id="statsForROVTeamTooltip">Stats for ROV Team</Tooltip>}><FontAwesomeIcon icon='table' fixedWidth /></OverlayTrigger></span> <CopyCruiseToClipboard cruise={this.state.activeCruise} cruiseLowerings={cruiseLowerings}/></span></Card.Header>
+          <Card.Header>{this.state.cruise_name}: <span className="text-warning">{this.state.activeCruise.cruise_id}</span><span className="float-right"><span onClick={() => this.handleCruiseMetricsModal(this.state.activeCruise)}><OverlayTrigger placement="top" overlay={<Tooltip id="cruiseMetricsTooltip">Cruise Statistics</Tooltip>}><FontAwesomeIcon icon='table' fixedWidth /></OverlayTrigger></span> <CopyCruiseToClipboard cruise={this.state.activeCruise} cruiseLowerings={cruiseLowerings}/></span></Card.Header>
           <Card.Body>
             {cruiseName}
             {cruisePi}
@@ -523,7 +523,7 @@ class CruiseMenu extends Component {
   render(){
     return (
       <div>
-        <StatsForROVTeamModal/>
+        <CruiseMetricsModal/>
         <SVProfileModal/>
         <Row>
             <h4>{MAIN_SCREEN_HEADER}</h4>

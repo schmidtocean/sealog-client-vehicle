@@ -11,7 +11,7 @@ let fileDownload = require('js-file-download');
 
 const cookies = new Cookies();
 
-class StatsForROVTeamModal extends Component {
+class CruiseMetricsModal extends Component {
 
   constructor (props) {
     super(props);
@@ -434,7 +434,7 @@ class StatsForROVTeamModal extends Component {
       return (
         <Modal size="lg" show={show} onHide={handleHide}>
           <Modal.Header closeButton>
-            <Modal.Title as="h5">Stats for ROV Team</Modal.Title>
+            <Modal.Title as="h5">Cruise Metrics</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
@@ -450,4 +450,4 @@ class StatsForROVTeamModal extends Component {
   }
 }
 
-export default connectModal({ name: 'statsForROVTeam' })(StatsForROVTeamModal)
+export default connectModal({ name: 'cruiseMetrics' })(CruiseMetricsModal)
