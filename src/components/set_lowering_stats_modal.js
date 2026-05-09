@@ -381,11 +381,12 @@ class SetLoweringStatsModal extends Component {
     
       events.map((event) => {
 
-        let aux_data = event['aux_data'].find((aux_data => aux_data['data_source'] == auxDatasource))
-        if(aux_data) {
+        let aux_data = event['aux_data'] && event['aux_data'].find((aux_data => aux_data['data_source'] == auxDatasource))
+        if(aux_data && aux_data['data_array'] && event['ts']) {
           try {
             const rawLat = aux_data['data_array'].find(data => data['data_name'] == 'latitude');
             const rawLng = aux_data['data_array'].find(data => data['data_name'] == 'longitude');
+            const rawDepth = aux_data['data_array'].find(data => data['data_name'] == 'depth');
 
             if(rawLat && rawLng) {
               const latLng = [ parseFloat(rawLat['data_value']), parseFloat(rawLng['data_value'])]
@@ -394,8 +395,15 @@ class SetLoweringStatsModal extends Component {
               }
             }
 
-            trackline.ts.push(moment.utc(event['ts']).valueOf());
-            trackline.depth.push([trackline.ts[trackline.ts.length-1], parseFloat(aux_data['data_array'].find(data => data['data_name'] == 'depth')['data_value'])]);
+            if(rawDepth) {
+              const eventTS = moment.utc(event['ts']).valueOf();
+              const depth = parseFloat(rawDepth['data_value']);
+
+              if(Number.isFinite(eventTS) && Number.isFinite(depth)) {
+                trackline.ts.push(eventTS);
+                trackline.depth.push([eventTS, depth]);
+              }
+            }
           }
           catch(err) {
             console.log("No latLng found, skipping...");
@@ -497,7 +505,7 @@ class SetLoweringStatsModal extends Component {
   }
 
   handleClick() {
-    if(this.state.milestone_to_edit) {
+    if(this.state.milestone_to_edit && this.state.event && this.state.event.ts) {
       this.setState((prevState) => { return { touched: true, milestones: { ...prevState.milestones, [prevState.milestone_to_edit]: prevState.event.ts } } });
       this.setMilestoneToEdit()
     }
