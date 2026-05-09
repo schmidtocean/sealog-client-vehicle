@@ -13,7 +13,7 @@ import HighchartsReact from 'highcharts-react-official';
 import moment from 'moment';
 import axios from 'axios';
 import Cookies from 'universal-cookie';
-import { Button, Row, Col, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Row, Col, Form, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { renderAlert, renderMessage } from './form_elements';
 import UpdateLoweringStatsForm from './update_lowering_stats_form';
 import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_config';
@@ -46,6 +46,7 @@ class SetLoweringStatsModal extends Component {
       fetching: false,
       tracklines: {},
       events: [],
+      hideASNAP: true,
 
       show_edit_form: false,
 
@@ -123,6 +124,7 @@ class SetLoweringStatsModal extends Component {
     this.clearEvent = this.clearEvent.bind(this);
     this.handleTweak = this.handleTweak.bind(this);
     this.handleShowEditForm = this.handleShowEditForm.bind(this);
+    this.toggleASNAP = this.toggleASNAP.bind(this);
 
   }
 
@@ -153,7 +155,7 @@ class SetLoweringStatsModal extends Component {
 
     if(this.props.event_templates !== prevProps.event_templates && this.state.posDataSource) {
       this.setState((prevState) => {
-        return { depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(prevState.posDataSource, prevState.tracklines, prevState.events) } }
+        return { depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(prevState.posDataSource, prevState.tracklines, prevState.events, prevState.hideASNAP) } }
       });
     }
 
@@ -261,12 +263,17 @@ class SetLoweringStatsModal extends Component {
     })
   }
 
-  getDepthChartData(posDataSource, tracklines = this.state.tracklines) {
+  getDepthChartData(posDataSource, tracklines = this.state.tracklines, events = this.state.events, hideASNAP = this.state.hideASNAP) {
     if(!posDataSource || !tracklines[posDataSource]) {
       return [];
     }
 
-    return tracklines[posDataSource].depth;
+    if(!hideASNAP) {
+      return tracklines[posDataSource].depth;
+    }
+
+    const asnapTimestamps = new Set(events.filter((event) => event.event_value === 'ASNAP').map((event) => moment.utc(event.ts).valueOf()));
+    return tracklines[posDataSource].depth.filter((depth) => !asnapTimestamps.has(depth[0]));
   }
 
   getEventMilestone(event) {
@@ -319,10 +326,10 @@ class SetLoweringStatsModal extends Component {
     }, []);
   }
 
-  getDepthChartSeries(posDataSource, tracklines = this.state.tracklines, events = this.state.events) {
+  getDepthChartSeries(posDataSource, tracklines = this.state.tracklines, events = this.state.events, hideASNAP = this.state.hideASNAP) {
     return [
       {
-        data: this.getDepthChartData(posDataSource, tracklines)
+        data: this.getDepthChartData(posDataSource, tracklines, events, hideASNAP)
       },
       {
         type: 'scatter',
@@ -405,7 +412,7 @@ class SetLoweringStatsModal extends Component {
       if (tracklines[this.auxDatasourceFilters[index]]) {
         const posDataSource = this.auxDatasourceFilters[index];
         this.setState((prevState) => {
-          return { events: events, tracklines: tracklines, fetching: false, depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(posDataSource, tracklines, events) }, posDataSource: posDataSource }
+          return { events: events, tracklines: tracklines, fetching: false, depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(posDataSource, tracklines, events, prevState.hideASNAP) }, posDataSource: posDataSource }
         });
 
         break;
@@ -429,6 +436,21 @@ class SetLoweringStatsModal extends Component {
 
   handleShowEditForm() {
     this.setState((prevState) => { return { show_edit_form: !prevState.show_edit_form}})  
+  }
+
+  toggleASNAP() {
+    this.setState((prevState) => {
+      const hideASNAP = !prevState.hideASNAP;
+
+      return {
+        event: null,
+        hideASNAP: hideASNAP,
+        depthChartOptions: {
+          ...prevState.depthChartOptions,
+          series: this.getDepthChartSeries(prevState.posDataSource, prevState.tracklines, prevState.events, hideASNAP)
+        }
+      }
+    });
   }
 
   handleTweak(milestones, stats) {
@@ -638,11 +660,16 @@ class SetLoweringStatsModal extends Component {
       </Col>]     
 
     const depth_profile = 
-      <HighchartsReact
-        highcharts={Highcharts}
-        options={this.state.depthChartOptions}
-        oneToOne={true}
-      />
+      <div>
+        <div className="">
+          <Form.Check id="setLoweringStatsASNAP" type='switch' inline checked={!this.state.hideASNAP} onChange={() => this.toggleASNAP()} label='ASNAP'/>
+        </div>
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={this.state.depthChartOptions}
+          oneToOne={true}
+        />
+      </div>
 
     const trackLine = (this.state.tracklines[this.state.posDataSource] && !this.state.tracklines[this.state.posDataSource].polyline.isEmpty()) ?
       <Polyline color="lime" positions={this.state.tracklines[this.state.posDataSource].polyline.getLatLngs()} />
