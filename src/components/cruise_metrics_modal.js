@@ -10,6 +10,22 @@ import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_config';
 let fileDownload = require('js-file-download');
 
 const cookies = new Cookies();
+const DECK_START_MILESTONES = ['In water'];
+const DECK_STOP_MILESTONES = ['Out of water'];
+const DEPLOYMENT_START_MILESTONES = ['Deployment'];
+const DEPLOYMENT_STOP_MILESTONES = ['Descent Initiated', 'Initial Descent', 'lowering_descending'];
+const SURVEY_DEPTH_START_MILESTONES = ['Reached Survey Depth', 'At Depth', 'lowering_on_bottom'];
+const SURVEY_DEPTH_STOP_MILESTONES = ['Leaving Survey Depth', 'lowering_off_bottom'];
+const SURFACE_MILESTONES = ['Vehicle on Surface', 'lowering_on_surface'];
+const RECOVERY_STOP_MILESTONES = ['Mission Key Inserted'];
+const STAGE_DEFINITIONS = [
+  { label: 'Deck to Deck', start: DECK_START_MILESTONES, startFallback: 'start_ts', stop: DECK_STOP_MILESTONES, stopFallback: 'stop_ts' },
+  { label: 'Deployment', start: DEPLOYMENT_START_MILESTONES, stop: DEPLOYMENT_STOP_MILESTONES },
+  { label: 'Descent', start: DEPLOYMENT_STOP_MILESTONES, stop: SURVEY_DEPTH_START_MILESTONES },
+  { label: 'Survey Depth', start: SURVEY_DEPTH_START_MILESTONES, stop: SURVEY_DEPTH_STOP_MILESTONES },
+  { label: 'Ascent', start: SURVEY_DEPTH_STOP_MILESTONES, stop: SURFACE_MILESTONES },
+  { label: 'Recovery', start: SURFACE_MILESTONES, stop: RECOVERY_STOP_MILESTONES }
+];
 
 class CruiseMetricsModal extends Component {
 
@@ -81,12 +97,31 @@ class CruiseMetricsModal extends Component {
 
   }
 
+  getMilestoneDate(lowering, milestoneNames) {
+    const milestones = lowering.lowering_additional_meta && lowering.lowering_additional_meta.milestones ? lowering.lowering_additional_meta.milestones : {};
+    const milestoneName = milestoneNames.find((name) => milestones[name]);
+
+    if(!milestoneName) {
+      return null;
+    }
+
+    try {
+      return moment.utc(milestones[milestoneName]);
+    }
+    catch(err) {
+      console.error(err);
+    }
+
+    return null;
+  }
+
   buildStatsAndTotals() {
 
     const lowering_stats = this.state.lowerings.map((lowering, index) => {
 
       const stats = {
         start_dt: null,
+        deployment_dt: null,
         descending_dt: null,
         on_bottom_dt: null,
         off_bottom_dt: null,
@@ -102,7 +137,19 @@ class CruiseMetricsModal extends Component {
         recovery_duration: null
       }
 
-      if (lowering.start_ts) {
+      const milestoneStart = this.getMilestoneDate(lowering, DECK_START_MILESTONES);
+      const milestoneStop = this.getMilestoneDate(lowering, DECK_STOP_MILESTONES);
+      stats.deployment_dt = this.getMilestoneDate(lowering, DEPLOYMENT_START_MILESTONES);
+      stats.descending_dt = this.getMilestoneDate(lowering, DEPLOYMENT_STOP_MILESTONES);
+      stats.on_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_START_MILESTONES);
+      stats.off_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_STOP_MILESTONES);
+      stats.on_surface_dt = this.getMilestoneDate(lowering, SURFACE_MILESTONES);
+      stats.mission_key_inserted_dt = this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES);
+
+      if (milestoneStart) {
+        stats.start_dt = milestoneStart;
+      }
+      else if (lowering.start_ts) {
         try {
           stats.start_dt = moment.utc(lowering.start_ts);
         }
@@ -111,45 +158,12 @@ class CruiseMetricsModal extends Component {
         }
       }
 
-      if (lowering.stop_ts) {
+      if (milestoneStop) {
+        stats.stop_dt = milestoneStop;
+      }
+      else if (lowering.stop_ts) {
         try {
           stats.stop_dt = moment.utc(lowering.stop_ts);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_descending) {
-        try {
-          stats.descending_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_descending);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_on_bottom) {
-        try {
-          stats.on_bottom_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_on_bottom);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_off_bottom) {
-        try {
-          stats.off_bottom_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_off_bottom);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_on_surface) {
-        try {
-          stats.on_surface_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_on_surface);
         }
         catch(err) {
           console.error(err);
@@ -180,8 +194,8 @@ class CruiseMetricsModal extends Component {
       }
 
       // deployment_duration
-      if (stats.start_dt && stats.descending_dt) {
-        stats.deployment_duration = stats.descending_dt - stats.start_dt
+      if (stats.deployment_dt && stats.descending_dt) {
+        stats.deployment_duration = stats.descending_dt - stats.deployment_dt
       }
 
       // descent_duration
@@ -200,8 +214,8 @@ class CruiseMetricsModal extends Component {
       }
 
       // recovery_duration
-      if (stats.on_surface_dt && stats.stop_dt) {
-        stats.recovery_duration = stats.stop_dt - stats.on_surface_dt
+      if (stats.on_surface_dt && stats.mission_key_inserted_dt) {
+        stats.recovery_duration = stats.mission_key_inserted_dt - stats.on_surface_dt
       }
 
       return stats
@@ -221,7 +235,7 @@ class CruiseMetricsModal extends Component {
       'Deck to Deck',
       'Deployment',
       'Descent',
-      'Seabed',
+      'Survey Depth',
       'Ascent',
       'Recovery',
       'Max Depth'
@@ -302,7 +316,7 @@ class CruiseMetricsModal extends Component {
           <th>Deck to Deck</th>
           <th>Deployment</th>
           <th>Descent</th>
-          <th>Seabed</th>
+          <th>Survey Depth</th>
           <th>Ascent</th>
           <th>Recovery</th>
           <th>Max Depth</th>
@@ -372,6 +386,25 @@ class CruiseMetricsModal extends Component {
     )
   }
 
+  renderStageBoundary(milestoneNames) {
+    return milestoneNames[0];
+  }
+
+  renderStageDefinitions() {
+    return (
+      <div className="small text-body mb-2">
+        <strong>Stage Definitions:</strong>
+        {STAGE_DEFINITIONS.map((stage) => {
+          return (
+            <div key={stage.label}>
+              {stage.label}: {this.renderStageBoundary(stage.start)} to {this.renderStageBoundary(stage.stop)}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   render() {
 
     const { show, handleHide, cruise } = this.props
@@ -387,6 +420,7 @@ class CruiseMetricsModal extends Component {
 
           <Modal.Body>
           {statsTable}
+          {this.renderStageDefinitions()}
           <span className='text-warning'>{this.state.status_msg}</span><span className="float-right"><Button variant="outline-primary" size="sm" onClick={this.exportDataToFile}>Export</Button></span>
           </Modal.Body>
         </Modal>
