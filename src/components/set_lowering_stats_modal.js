@@ -26,6 +26,9 @@ HighchartsNoDataToDisplay(Highcharts);
 const { BaseLayer } = LayersControl
 
 const cookies = new Cookies();
+const MILESTONE_OPTION_NAME = 'milestone';
+const LOWERING_START_MILESTONE = 'lowering_start';
+const LOWERING_STOP_MILESTONE = 'lowering_stop';
 
 class SetLoweringStatsModal extends Component {
 
@@ -53,15 +56,7 @@ class SetLoweringStatsModal extends Component {
       height: "400px",
 
       milestone_to_edit: null,
-      milestones: {
-        lowering_start: this.props.lowering.start_ts,
-        lowering_descending: (this.props.lowering.lowering_additional_meta.milestones && this.props.lowering.lowering_additional_meta.milestones.lowering_descending) ? this.props.lowering.lowering_additional_meta.milestones.lowering_descending : null,
-        lowering_on_bottom: (this.props.lowering.lowering_additional_meta.milestones && this.props.lowering.lowering_additional_meta.milestones.lowering_on_bottom) ? this.props.lowering.lowering_additional_meta.milestones.lowering_on_bottom : null,
-        lowering_off_bottom: (this.props.lowering.lowering_additional_meta.milestones && this.props.lowering.lowering_additional_meta.milestones.lowering_off_bottom) ? this.props.lowering.lowering_additional_meta.milestones.lowering_off_bottom : null,
-        lowering_on_surface: (this.props.lowering.lowering_additional_meta.milestones && this.props.lowering.lowering_additional_meta.milestones.lowering_on_surface) ? this.props.lowering.lowering_additional_meta.milestones.lowering_on_surface : null,
-        lowering_stop: this.props.lowering.stop_ts,
-        lowering_aborted: (this.props.lowering.lowering_additional_meta.milestones && this.props.lowering.lowering_additional_meta.milestones.lowering_aborted) ? this.props.lowering.lowering_additional_meta.milestones.lowering_aborted : null,
-      },
+      milestones: this.getInitialMilestones(props),
       stats: {
         max_depth: (this.props.lowering.lowering_additional_meta.stats && this.props.lowering.lowering_additional_meta.stats.max_depth) ? this.props.lowering.lowering_additional_meta.stats.max_depth : null,
         bounding_box: (this.props.lowering.lowering_additional_meta.stats && this.props.lowering.lowering_additional_meta.stats.bounding_box) ? this.props.lowering.lowering_additional_meta.stats.bounding_box : []
@@ -133,6 +128,7 @@ class SetLoweringStatsModal extends Component {
 
   static propTypes = {
     lowering: PropTypes.object,
+    event_templates: PropTypes.array,
     handleHide: PropTypes.func.isRequired,
     handleUpdateLowering: PropTypes.func,
     message: PropTypes.string,
@@ -140,13 +136,13 @@ class SetLoweringStatsModal extends Component {
   };
 
   componentDidMount() {
+    this.props.fetchEventTemplates();
     this.initEvents(this.props.lowering.id);
     this.initLoweringTrackline(this.props.lowering.id);
     this.setPlotLines();
   }
 
   componentDidUpdate(prevProps, prevState) {
-
     if(this.state.milestones !== prevState.milestones) {
       this.setPlotLines();
     }
@@ -161,6 +157,102 @@ class SetLoweringStatsModal extends Component {
     if (this.props.lowering) {
       this.props.initLowering(this.props.lowering.id)
     }
+  }
+
+  getSavedMilestones(props = this.props) {
+    return (props.lowering.lowering_additional_meta && props.lowering.lowering_additional_meta.milestones) ? props.lowering.lowering_additional_meta.milestones : {};
+  }
+
+  getInitialMilestones(props = this.props) {
+    return {
+      [LOWERING_START_MILESTONE]: props.lowering.start_ts,
+      ...this.getSavedMilestones(props),
+      [LOWERING_STOP_MILESTONE]: props.lowering.stop_ts,
+    }
+  }
+
+  getMilestoneKey(template) {
+    if(!template.event_options) {
+      return null;
+    }
+
+    const milestoneOption = template.event_options.find((option) => option.event_option_name === MILESTONE_OPTION_NAME)
+
+    if(!milestoneOption) {
+      return null;
+    }
+
+    if(milestoneOption.event_option_default_value) {
+      return milestoneOption.event_option_default_value;
+    }
+
+    if(Array.isArray(milestoneOption.event_option_values) && milestoneOption.event_option_values.length === 1) {
+      return milestoneOption.event_option_values[0];
+    }
+
+    return null;
+  }
+
+  getMilestoneTemplates(props = this.props) {
+    const event_templates = props.event_templates || [];
+    const seen = new Set();
+
+    return event_templates.reduce((milestones, template) => {
+      if(template.disabled) {
+        return milestones;
+      }
+
+      const key = this.getMilestoneKey(template);
+      if(!key || seen.has(key)) {
+        return milestones;
+      }
+
+      seen.add(key);
+      milestones.push({
+        key,
+        label: template.event_name || this.formatMilestoneLabel(key)
+      });
+
+      return milestones;
+    }, []);
+  }
+
+  formatMilestoneLabel(key) {
+    return key.replace(/^lowering_/, '').split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  getMilestoneLabel(key) {
+    const milestone = this.getMilestoneItems().find((item) => item.key === key);
+    return milestone ? milestone.label : this.formatMilestoneLabel(key);
+  }
+
+  getMilestoneItems() {
+    const items = [
+      { key: LOWERING_START_MILESTONE, label: `${this.state.lowering_name} Start` },
+      ...this.getMilestoneTemplates()
+    ];
+    const displayedKeys = new Set(items.map((item) => item.key));
+
+    Object.keys(this.state.milestones).forEach((key) => {
+      if(key !== LOWERING_START_MILESTONE && key !== LOWERING_STOP_MILESTONE && !displayedKeys.has(key)) {
+        items.push({ key, label: this.formatMilestoneLabel(key) });
+        displayedKeys.add(key);
+      }
+    });
+
+    items.push({ key: LOWERING_STOP_MILESTONE, label: 'On Deck' });
+
+    return items;
+  }
+
+  renderMilestoneItems() {
+    return this.getMilestoneItems().map((milestone) => {
+      return (
+        <React.Fragment key={milestone.key}>
+          <span className={(this.state.milestone_to_edit == milestone.key)? "text-warning" : ""} onClick={() => this.setMilestoneToEdit(milestone.key)}>{milestone.label}: {this.state.milestones[milestone.key]}</span><br/>
+        </React.Fragment>
+      )
+    })
   }
 
   async initEvents() {
@@ -263,21 +355,23 @@ class SetLoweringStatsModal extends Component {
 
   handleTweak(milestones, stats) {
 
-    this.setState({milestones, stats})
+    const updatedMilestones = { ...this.state.milestones, ...milestones };
 
-    const start_ts = moment.utc(milestones.lowering_start);
-    const stop_ts = moment.utc(milestones.lowering_stop);
+    this.setState({milestones: updatedMilestones, stats})
+
+    const start_ts = moment.utc(updatedMilestones[LOWERING_START_MILESTONE]);
+    const stop_ts = moment.utc(updatedMilestones[LOWERING_STOP_MILESTONE]);
     
-    const newMilestones = {...milestones}
-    delete newMilestones.lowering_start;
-    delete newMilestones.lowering_stop;
+    const newMilestones = {...updatedMilestones}
+    delete newMilestones[LOWERING_START_MILESTONE];
+    delete newMilestones[LOWERING_STOP_MILESTONE];
 
     const lowering_additional_meta = { ...this.props.lowering.lowering_additional_meta, milestones: newMilestones, stats }
 
     const newLoweringRecord = { ...this.props.lowering, start_ts, stop_ts, lowering_additional_meta }
 
     this.props.handleUpdateLowering(newLoweringRecord)
-    this.setState({milestones, stats, touched: false, show_edit_form: false})
+    this.setState({milestones: updatedMilestones, stats, touched: false, show_edit_form: false})
   }
 
   handleCalculateBoundingBox() {
@@ -307,12 +401,12 @@ class SetLoweringStatsModal extends Component {
 
   handleUpdateLowering() {
     const newMilestones = { ...this.state.milestones };
-    delete newMilestones.lowering_start;
-    delete newMilestones.lowering_stop;
+    delete newMilestones[LOWERING_START_MILESTONE];
+    delete newMilestones[LOWERING_STOP_MILESTONE];
 
     const newLoweringAdditionalMeta = { ...this.props.lowering.lowering_additional_meta, milestones: newMilestones, stats: this.state.stats }
 
-    const newLoweringRecord = { ...this.props.lowering, start_ts: this.state.milestones.lowering_start, stop_ts: this.state.milestones.lowering_stop, lowering_additional_meta: newLoweringAdditionalMeta }
+    const newLoweringRecord = { ...this.props.lowering, start_ts: this.state.milestones[LOWERING_START_MILESTONE], stop_ts: this.state.milestones[LOWERING_STOP_MILESTONE], lowering_additional_meta: newLoweringAdditionalMeta }
 
     this.props.handleUpdateLowering(newLoweringRecord)
     this.setState({touched: false})
@@ -376,7 +470,7 @@ class SetLoweringStatsModal extends Component {
     }
 
     return `${event_txt}<br/><span>${this.state.event.ts}</span><br/>
-      ${(this.state.milestone_to_edit) ? '<span>Click to set ' + this.state.milestone_to_edit + '.</span>' : '' }`
+      ${(this.state.milestone_to_edit) ? '<span>Click to set ' + this.getMilestoneLabel(this.state.milestone_to_edit) + '.</span>' : '' }`
   }
 
   handleZoomEnd() {
@@ -447,13 +541,7 @@ class SetLoweringStatsModal extends Component {
       </Col>
     : [<Col key="milestones" md={6}>
         <div>
-          <span className={(this.state.milestone_to_edit == 'lowering_start')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_start')}>{this.state.lowering_name} Start: {this.state.milestones.lowering_start}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_descending')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_descending')}>Descending: {this.state.milestones.lowering_descending}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_on_bottom')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_on_bottom')}>On Bottom: {this.state.milestones.lowering_on_bottom}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_off_bottom')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_off_bottom')}>Off Bottom: {this.state.milestones.lowering_off_bottom}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_on_surface')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_on_surface')}>Floats on Surface: {this.state.milestones.lowering_on_surface}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_stop')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_stop')}>On Deck: {this.state.milestones.lowering_stop}</span><br/>
-          <span className={(this.state.milestone_to_edit == 'lowering_aborted')? "text-warning" : ""} onClick={() => this.setMilestoneToEdit('lowering_aborted')}>Aborted: {this.state.milestones.lowering_aborted}</span>
+          {this.renderMilestoneItems()}
         </div>
       </Col>,
       <Col key="stats" md={6}>
@@ -550,6 +638,7 @@ function mapStateToProps(state) {
     roles: state.user.profile.roles,
     errorMessage: state.lowering.lowering_error,
     message: state.lowering.lowering_message,
+    event_templates: state.event_template.event_templates.length > 0 ? state.event_template.event_templates : state.event_history.event_templates,
   }
 }
 
