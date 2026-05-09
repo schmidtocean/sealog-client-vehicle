@@ -210,7 +210,7 @@ class SetLoweringStatsModal extends Component {
       seen.add(key);
       milestones.push({
         key,
-        label: template.event_value || this.formatMilestoneLabel(key)
+        label: key
       });
 
       return milestones;
