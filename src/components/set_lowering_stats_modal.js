@@ -86,6 +86,7 @@ class SetLoweringStatsModal extends Component {
         },
         xAxis: {
           type: 'datetime',
+          minRange: 1,
           plotLines: []
         },
         yAxis: {
@@ -413,6 +414,9 @@ class SetLoweringStatsModal extends Component {
         const posDataSource = this.auxDatasourceFilters[index];
         this.setState((prevState) => {
           return { events: events, tracklines: tracklines, fetching: false, depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(posDataSource, tracklines, events, prevState.hideASNAP) }, posDataSource: posDataSource }
+        }, () => {
+          this.handleCalculateMaxDepth();
+          this.handleCalculateBoundingBox();
         });
 
         break;
@@ -504,12 +508,26 @@ class SetLoweringStatsModal extends Component {
     delete newMilestones[LOWERING_START_MILESTONE];
     delete newMilestones[LOWERING_STOP_MILESTONE];
 
-    const newLoweringAdditionalMeta = { ...this.props.lowering.lowering_additional_meta, milestones: newMilestones, stats: this.state.stats }
+    let stats = { ...this.state.stats };
+
+    if(this.state.tracklines[this.state.posDataSource] && this.state.tracklines[this.state.posDataSource].depth.length > 0) {
+      stats.max_depth = this.state.tracklines[this.state.posDataSource].depth.reduce((current_max_depth, depth) => {
+        current_max_depth = (depth[1] > current_max_depth) ? depth[1] : current_max_depth
+        return current_max_depth
+      }, 0)
+    }
+
+    if(this.state.tracklines[this.state.posDataSource] && !this.state.tracklines[this.state.posDataSource].polyline.isEmpty()) {
+      let lowering_bounds = this.state.tracklines[this.state.posDataSource].polyline.getBounds()
+      stats.bounding_box = [lowering_bounds.getNorth(),lowering_bounds.getEast(),lowering_bounds.getSouth(),lowering_bounds.getWest()]
+    }
+
+    const newLoweringAdditionalMeta = { ...this.props.lowering.lowering_additional_meta, milestones: newMilestones, stats }
 
     const newLoweringRecord = { ...this.props.lowering, start_ts: this.state.milestones[LOWERING_START_MILESTONE], stop_ts: this.state.milestones[LOWERING_STOP_MILESTONE], lowering_additional_meta: newLoweringAdditionalMeta }
 
     this.props.handleUpdateLowering(newLoweringRecord)
-    this.setState({touched: false})
+    this.setState({stats, touched: false})
   }
 
   setMilestoneToEdit(milestone = null) {
