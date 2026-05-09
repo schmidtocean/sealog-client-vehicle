@@ -671,7 +671,7 @@ class SetLoweringStatsModal extends Component {
 
     const milestones_and_stats = (this.state.show_edit_form) ?
       <Col md={12}>
-        <UpdateLoweringStatsForm milestones={this.state.milestones} stats={this.state.stats} handleHide={this.handleShowEditForm} handleFormSubmit={this.handleTweak}/>
+        <UpdateLoweringStatsForm milestoneItems={this.getMilestoneItems()} milestones={this.state.milestones} stats={this.state.stats} handleHide={this.handleShowEditForm} handleFormSubmit={this.handleTweak}/>
       </Col>
     : [<Col key="milestones" md={6}>
         <div>
