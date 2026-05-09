@@ -151,6 +151,12 @@ class SetLoweringStatsModal extends Component {
       this.setPlotLines();
     }
 
+    if(this.props.event_templates !== prevProps.event_templates && this.state.posDataSource) {
+      this.setState((prevState) => {
+        return { depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(prevState.posDataSource, prevState.tracklines, prevState.events) } }
+      });
+    }
+
   }
 
   componentWillUnmount() {
@@ -255,6 +261,77 @@ class SetLoweringStatsModal extends Component {
     })
   }
 
+  getDepthChartData(posDataSource, tracklines = this.state.tracklines) {
+    if(!posDataSource || !tracklines[posDataSource]) {
+      return [];
+    }
+
+    return tracklines[posDataSource].depth;
+  }
+
+  getEventMilestone(event) {
+    return event.event_options ? event.event_options.find((option) => option.event_option_name === MILESTONE_OPTION_NAME) : null;
+  }
+
+  getNearestDepth(depthData, targetTS) {
+    if(!depthData || depthData.length === 0) {
+      return null;
+    }
+
+    return depthData.reduce((nearestDepth, depth) => {
+      return (Math.abs(depth[0] - targetTS) < Math.abs(nearestDepth[0] - targetTS)) ? depth : nearestDepth;
+    }, depthData[0]);
+  }
+
+  getMilestoneChartData(posDataSource, tracklines = this.state.tracklines, events = this.state.events) {
+    if(!posDataSource || !tracklines[posDataSource]) {
+      return [];
+    }
+
+    const milestoneValues = new Set(this.getMilestoneItems().map((milestone) => milestone.key));
+
+    return events.reduce((milestoneData, event) => {
+      const milestone = this.getEventMilestone(event);
+
+      if(!milestone || !milestoneValues.has(milestone.event_option_value)) {
+        return milestoneData;
+      }
+
+      const eventTS = moment.utc(event.ts).valueOf();
+      const depth = this.getNearestDepth(tracklines[posDataSource].depth, eventTS);
+
+      if(depth) {
+        milestoneData.push({
+          x: eventTS,
+          y: depth[1],
+          marker: {
+            enabled: true,
+            fillColor: '#77B300',
+            lineColor: '#FFFFFF',
+            lineWidth: 1,
+            radius: 6,
+            symbol: 'circle'
+          }
+        });
+      }
+
+      return milestoneData;
+    }, []);
+  }
+
+  getDepthChartSeries(posDataSource, tracklines = this.state.tracklines, events = this.state.events) {
+    return [
+      {
+        data: this.getDepthChartData(posDataSource, tracklines)
+      },
+      {
+        type: 'scatter',
+        data: this.getMilestoneChartData(posDataSource, tracklines, events),
+        zIndex: 5
+      }
+    ];
+  }
+
   async initEvents() {
 
     const data = await axios.get(`${API_ROOT_URL}/api/v1/event_exports/bylowering/${this.props.lowering.id}`,
@@ -326,8 +403,9 @@ class SetLoweringStatsModal extends Component {
 
     for (let index=0;index<this.auxDatasourceFilters.length;index++) {
       if (tracklines[this.auxDatasourceFilters[index]]) {
+        const posDataSource = this.auxDatasourceFilters[index];
         this.setState((prevState) => {
-          return { events: events, tracklines: tracklines, fetching: false, depthChartOptions: { ...prevState.depthChartOptions, series: [ { data: tracklines[this.auxDatasourceFilters[index]].depth } ] }, posDataSource: this.auxDatasourceFilters[index] }
+          return { events: events, tracklines: tracklines, fetching: false, depthChartOptions: { ...prevState.depthChartOptions, series: this.getDepthChartSeries(posDataSource, tracklines, events) }, posDataSource: posDataSource }
         });
 
         break;
@@ -458,6 +536,10 @@ class SetLoweringStatsModal extends Component {
   }
 
   tooltipFormatter() {
+    if(!this.state.event) {
+      return ''
+    }
+
     let event_txt = `<b>EVENT: ${this.state.event.event_value}</b>`
     if(this.state.event.event_value === 'FREE_FORM') {
       event_txt = `<span>${event_txt}<br/><b>Text:</b> ${this.state.event.event_free_text}</span>`
@@ -487,9 +569,13 @@ class SetLoweringStatsModal extends Component {
 
   renderMarker() {
 
-    if(this.state.event) {
+    if(this.state.event && this.state.event.aux_data) {
 
       const posData = this.state.event.aux_data.find((data) => data['data_source'] === this.state.posDataSource);
+      if(!posData) {
+        return null;
+      }
+
       const rawLat = posData['data_array'].find(data => data['data_name'] == 'latitude')
       const rawLng = posData['data_array'].find(data => data['data_name'] == 'longitude')
       if( rawLat && rawLng ) {
