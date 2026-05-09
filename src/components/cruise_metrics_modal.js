@@ -19,7 +19,6 @@ class CruiseMetricsModal extends Component {
     this.state = {
       lowerings: null,
       lowering_stats: null,
-      lowering_samples: null,
       lowering_stat_totals: null,
       status_msg: '',
       lowering_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : "Lowering",
@@ -48,46 +47,9 @@ class CruiseMetricsModal extends Component {
 
     if(this.state.lowerings && this.state.lowerings != prevState.lowerings) {
       // console.log("lowerings changed");
-      this.fetchLoweringSampleCount();
-    }
-
-    if(this.state.lowering_samples && this.state.lowering_samples != prevState.lowering_samples) {
-      // console.log("samples changed");
       this.buildStatsAndTotals();
     }
 
-  }
-
-  async fetchLoweringSampleCount() {
-
-    this.setState({status_msg: "Downloading sample counts..."})
-    const samples = await this.state.lowerings.map(async (lowering) => {
-      const samples_count = await axios.get(`${API_ROOT_URL}/api/v1/events/bylowering/${lowering.id}?value=SAMPLE`,
-        {
-          headers: {
-          authorization: cookies.get('token')
-          }
-        }      
-      ).then((response) => {
-
-        const sample_events = response.data.filter((event) => event['event_value'] == 'SAMPLE');
-        return sample_events.length;
-
-      }).catch((error) => {
-        console.log(error)
-        if(error.response.status !== 404) {
-          console.log(error)
-        }
-
-        return 0;
-      })
-
-      return samples_count
-    })
-
-    Promise.all(samples).then((values) => {
-      this.setState({lowering_samples: values, status_msg: ""});
-    })
   }
 
 
@@ -137,8 +99,7 @@ class CruiseMetricsModal extends Component {
         descent_duration: null,
         on_bottom_duration: null,
         ascent_duration: null,
-        recovery_duration: null,
-        samples_collected: 0
+        recovery_duration: null
       }
 
       if (lowering.start_ts) {
@@ -243,9 +204,6 @@ class CruiseMetricsModal extends Component {
         stats.recovery_duration = stats.stop_dt - stats.on_surface_dt
       }
 
-      // samples
-      stats.samples_collected = (this.state.lowering_samples[index]) ? this.state.lowering_samples[index] : 0;
-
       return stats
 
     })
@@ -266,7 +224,6 @@ class CruiseMetricsModal extends Component {
       'Seabed',
       'Ascent',
       'Recovery',
-      'Samples',
       'Max Depth'
     ])
 
@@ -280,7 +237,6 @@ class CruiseMetricsModal extends Component {
         moment.duration(stat.on_bottom_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.ascent_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.recovery_duration).format('HH:mm:ss', { trim: false }),
-        stat.samples_collected,
         stat.max_depth
       ])
     })
@@ -292,7 +248,6 @@ class CruiseMetricsModal extends Component {
       totals.on_bottom_duration += lowering.on_bottom_duration;
       totals.ascent_duration += lowering.ascent_duration;
       totals.recovery_duration += lowering.recovery_duration;
-      totals.samples_collected += lowering.samples_collected;
       totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
 
       return totals
@@ -303,7 +258,6 @@ class CruiseMetricsModal extends Component {
       on_bottom_duration: 0,
       ascent_duration: 0,
       recovery_duration: 0,
-      samples_collected: 0,
       max_depth: 0
     });
 
@@ -316,7 +270,6 @@ class CruiseMetricsModal extends Component {
       moment.duration(lowering_stat_totals.on_bottom_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.ascent_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.recovery_duration).format('HH:mm:ss', { trim: false }),
-      lowering_stat_totals.samples_collected,
       lowering_stat_totals.max_depth
     ])
 
@@ -352,7 +305,6 @@ class CruiseMetricsModal extends Component {
           <th>Seabed</th>
           <th>Ascent</th>
           <th>Recovery</th>
-          <th>Samples</th>
           <th>Max Depth</th>
         </tr>
       </thead>
@@ -369,7 +321,6 @@ class CruiseMetricsModal extends Component {
           <td>{`${moment.duration(stat.on_bottom_duration).format('HH:mm:ss', { trim: false })}`}</td>
           <td>{`${moment.duration(stat.ascent_duration).format('HH:mm:ss', { trim: false })}`}</td>
           <td>{`${moment.duration(stat.recovery_duration).format('HH:mm:ss', { trim: false })}`}</td>
-          <td>{stat.samples_collected}</td>
           <td>{stat.max_depth}</td>
         </tr>
       )
@@ -382,7 +333,6 @@ class CruiseMetricsModal extends Component {
       totals.on_bottom_duration += lowering.on_bottom_duration;
       totals.ascent_duration += lowering.ascent_duration;
       totals.recovery_duration += lowering.recovery_duration;
-      totals.samples_collected += lowering.samples_collected;
       totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
 
       return totals
@@ -394,7 +344,6 @@ class CruiseMetricsModal extends Component {
       on_bottom_duration: 0,
       ascent_duration: 0,
       recovery_duration: 0,
-      samples_collected: 0,
       max_depth: 0
     })
 
@@ -408,7 +357,6 @@ class CruiseMetricsModal extends Component {
         <th>{`${moment.duration(lowering_stat_totals.on_bottom_duration).format('HH:mm:ss', { trim: false })}`}</th>
         <th>{`${moment.duration(lowering_stat_totals.ascent_duration).format('HH:mm:ss', { trim: false })}`}</th>
         <th>{`${moment.duration(lowering_stat_totals.recovery_duration).format('HH:mm:ss', { trim: false })}`}</th>
-        <th>{lowering_stat_totals.samples_collected}</th>
         <th>{lowering_stat_totals.max_depth}</th>
       </tr>
     )
