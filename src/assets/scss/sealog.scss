@@ -177,13 +177,11 @@ button.btn-template {
 }
 
 .event-list-item:hover {
-  background-color: inherit;
+  color: var(--bs-primary);
 }
 
 .event-list-item.active {
-  background-color: inherit;
-  color: var(--bs-primary);
-  border: none;
+  color: $white;
 }
 
 .event-list-item-summary {
