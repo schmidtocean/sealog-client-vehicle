@@ -16,14 +16,15 @@ class ReviewGallery extends Component {
 
     this.state = {
       fetching: false,
-      aux_data: [],
+      aux_data: {},
       maxImagesPerPage: 16
     }
 
-    this.formRef = React.createRef() // Reference to the slider
+    this.formRef = React.createRef()
 
     this.toggleASNAP = this.toggleASNAP.bind(this)
     this.handleImageCountChange = this.handleImageCountChange.bind(this)
+    this.handleTabSelect = this.handleTabSelect.bind(this)
   }
 
   async componentDidMount() {
@@ -60,11 +61,11 @@ class ReviewGallery extends Component {
     let image_data = {}
     aux_data.forEach((data) => {
       for (let i = 0; i < data.data_array.length; i += 2) {
-        if (!(data.data_array[i].data_value in image_data)) {
-          image_data[data.data_array[i].data_value] = { images: [] }
+        const tabKey = data.data_source === 'eventFileAttachments' ? 'Attached Images' : data.data_array[i].data_value
+        if (!(tabKey in image_data)) {
+          image_data[tabKey] = { images: [] }
         }
-
-        image_data[data.data_array[i].data_value].images.push({
+        image_data[tabKey].images.push({
           event_id: data.event_id,
           filepath: data.data_array[i + 1].data_value
         })
