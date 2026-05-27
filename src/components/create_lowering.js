@@ -27,7 +27,7 @@ class CreateLowering extends Component {
   }
 
   async populateDefaultValues() {
-    let loweringDefaultValues = { start_ts: moment.utc(), stop_ts: moment.utc().add(1, 'days') };
+    let loweringDefaultValues = { start_ts: moment.utc(), stop_ts: moment.utc().add(48, 'hours') };
     this.props.initialize(loweringDefaultValues);
   }
 
