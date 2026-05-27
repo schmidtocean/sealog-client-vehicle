@@ -10,8 +10,24 @@ import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_config';
 let fileDownload = require('js-file-download');
 
 const cookies = new Cookies();
+const DECK_START_MILESTONES = ['In water'];
+const DECK_STOP_MILESTONES = ['Out of water'];
+const DEPLOYMENT_START_MILESTONES = ['Deployment'];
+const DEPLOYMENT_STOP_MILESTONES = ['Descent Initiated', 'Initial Descent', 'lowering_descending'];
+const SURVEY_DEPTH_START_MILESTONES = ['Reached Survey Depth', 'At Depth', 'lowering_on_bottom'];
+const SURVEY_DEPTH_STOP_MILESTONES = ['Leaving Survey Depth', 'lowering_off_bottom'];
+const SURFACE_MILESTONES = ['Vehicle on Surface', 'lowering_on_surface'];
+const RECOVERY_STOP_MILESTONES = ['Mission Key Inserted'];
+const STAGE_DEFINITIONS = [
+  { label: 'Deck to Deck', start: DECK_START_MILESTONES, startFallback: 'start_ts', stop: DECK_STOP_MILESTONES, stopFallback: 'stop_ts' },
+  { label: 'Deployment', start: DEPLOYMENT_START_MILESTONES, stop: DEPLOYMENT_STOP_MILESTONES },
+  { label: 'Descent', start: DEPLOYMENT_STOP_MILESTONES, stop: SURVEY_DEPTH_START_MILESTONES },
+  { label: 'Survey Depth', start: SURVEY_DEPTH_START_MILESTONES, stop: SURVEY_DEPTH_STOP_MILESTONES },
+  { label: 'Ascent', start: SURVEY_DEPTH_STOP_MILESTONES, stop: SURFACE_MILESTONES },
+  { label: 'Recovery', start: SURFACE_MILESTONES, stop: RECOVERY_STOP_MILESTONES }
+];
 
-class StatsForROVTeamModal extends Component {
+class CruiseMetricsModal extends Component {
 
   constructor (props) {
     super(props);
@@ -19,7 +35,6 @@ class StatsForROVTeamModal extends Component {
     this.state = {
       lowerings: null,
       lowering_stats: null,
-      lowering_samples: null,
       lowering_stat_totals: null,
       status_msg: '',
       lowering_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : "Lowering",
@@ -48,46 +63,9 @@ class StatsForROVTeamModal extends Component {
 
     if(this.state.lowerings && this.state.lowerings != prevState.lowerings) {
       // console.log("lowerings changed");
-      this.fetchLoweringSampleCount();
-    }
-
-    if(this.state.lowering_samples && this.state.lowering_samples != prevState.lowering_samples) {
-      // console.log("samples changed");
       this.buildStatsAndTotals();
     }
 
-  }
-
-  async fetchLoweringSampleCount() {
-
-    this.setState({status_msg: "Downloading sample counts..."})
-    const samples = await this.state.lowerings.map(async (lowering) => {
-      const samples_count = await axios.get(`${API_ROOT_URL}/api/v1/events/bylowering/${lowering.id}?value=SAMPLE`,
-        {
-          headers: {
-          authorization: cookies.get('token')
-          }
-        }      
-      ).then((response) => {
-
-        const sample_events = response.data.filter((event) => event['event_value'] == 'SAMPLE');
-        return sample_events.length;
-
-      }).catch((error) => {
-        console.log(error)
-        if(error.response.status !== 404) {
-          console.log(error)
-        }
-
-        return 0;
-      })
-
-      return samples_count
-    })
-
-    Promise.all(samples).then((values) => {
-      this.setState({lowering_samples: values, status_msg: ""});
-    })
   }
 
 
@@ -119,12 +97,31 @@ class StatsForROVTeamModal extends Component {
 
   }
 
+  getMilestoneDate(lowering, milestoneNames) {
+    const milestones = lowering.lowering_additional_meta && lowering.lowering_additional_meta.milestones ? lowering.lowering_additional_meta.milestones : {};
+    const milestoneName = milestoneNames.find((name) => milestones[name]);
+
+    if(!milestoneName) {
+      return null;
+    }
+
+    try {
+      return moment.utc(milestones[milestoneName]);
+    }
+    catch(err) {
+      console.error(err);
+    }
+
+    return null;
+  }
+
   buildStatsAndTotals() {
 
     const lowering_stats = this.state.lowerings.map((lowering, index) => {
 
       const stats = {
         start_dt: null,
+        deployment_dt: null,
         descending_dt: null,
         on_bottom_dt: null,
         off_bottom_dt: null,
@@ -137,11 +134,22 @@ class StatsForROVTeamModal extends Component {
         descent_duration: null,
         on_bottom_duration: null,
         ascent_duration: null,
-        recovery_duration: null,
-        samples_collected: 0
+        recovery_duration: null
       }
 
-      if (lowering.start_ts) {
+      const milestoneStart = this.getMilestoneDate(lowering, DECK_START_MILESTONES);
+      const milestoneStop = this.getMilestoneDate(lowering, DECK_STOP_MILESTONES);
+      stats.deployment_dt = this.getMilestoneDate(lowering, DEPLOYMENT_START_MILESTONES);
+      stats.descending_dt = this.getMilestoneDate(lowering, DEPLOYMENT_STOP_MILESTONES);
+      stats.on_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_START_MILESTONES);
+      stats.off_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_STOP_MILESTONES);
+      stats.on_surface_dt = this.getMilestoneDate(lowering, SURFACE_MILESTONES);
+      stats.mission_key_inserted_dt = this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES);
+
+      if (milestoneStart) {
+        stats.start_dt = milestoneStart;
+      }
+      else if (lowering.start_ts) {
         try {
           stats.start_dt = moment.utc(lowering.start_ts);
         }
@@ -150,45 +158,12 @@ class StatsForROVTeamModal extends Component {
         }
       }
 
-      if (lowering.stop_ts) {
+      if (milestoneStop) {
+        stats.stop_dt = milestoneStop;
+      }
+      else if (lowering.stop_ts) {
         try {
           stats.stop_dt = moment.utc(lowering.stop_ts);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_descending) {
-        try {
-          stats.descending_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_descending);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_on_bottom) {
-        try {
-          stats.on_bottom_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_on_bottom);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_off_bottom) {
-        try {
-          stats.off_bottom_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_off_bottom);
-        }
-        catch(err) {
-          console.error(err);
-        }
-      }
-
-      if (lowering.lowering_additional_meta.milestones && lowering.lowering_additional_meta.milestones.lowering_on_surface) {
-        try {
-          stats.on_surface_dt = moment.utc(lowering.lowering_additional_meta.milestones.lowering_on_surface);
         }
         catch(err) {
           console.error(err);
@@ -219,8 +194,8 @@ class StatsForROVTeamModal extends Component {
       }
 
       // deployment_duration
-      if (stats.start_dt && stats.descending_dt) {
-        stats.deployment_duration = stats.descending_dt - stats.start_dt
+      if (stats.deployment_dt && stats.descending_dt) {
+        stats.deployment_duration = stats.descending_dt - stats.deployment_dt
       }
 
       // descent_duration
@@ -239,12 +214,9 @@ class StatsForROVTeamModal extends Component {
       }
 
       // recovery_duration
-      if (stats.on_surface_dt && stats.stop_dt) {
-        stats.recovery_duration = stats.stop_dt - stats.on_surface_dt
+      if (stats.on_surface_dt && stats.mission_key_inserted_dt) {
+        stats.recovery_duration = stats.mission_key_inserted_dt - stats.on_surface_dt
       }
-
-      // samples
-      stats.samples_collected = (this.state.lowering_samples[index]) ? this.state.lowering_samples[index] : 0;
 
       return stats
 
@@ -263,10 +235,9 @@ class StatsForROVTeamModal extends Component {
       'Deck to Deck',
       'Deployment',
       'Descent',
-      'Seabed',
+      'Survey Depth',
       'Ascent',
       'Recovery',
-      'Samples',
       'Max Depth'
     ])
 
@@ -280,7 +251,6 @@ class StatsForROVTeamModal extends Component {
         moment.duration(stat.on_bottom_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.ascent_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.recovery_duration).format('HH:mm:ss', { trim: false }),
-        stat.samples_collected,
         stat.max_depth
       ])
     })
@@ -292,7 +262,6 @@ class StatsForROVTeamModal extends Component {
       totals.on_bottom_duration += lowering.on_bottom_duration;
       totals.ascent_duration += lowering.ascent_duration;
       totals.recovery_duration += lowering.recovery_duration;
-      totals.samples_collected += lowering.samples_collected;
       totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
 
       return totals
@@ -303,7 +272,6 @@ class StatsForROVTeamModal extends Component {
       on_bottom_duration: 0,
       ascent_duration: 0,
       recovery_duration: 0,
-      samples_collected: 0,
       max_depth: 0
     });
 
@@ -316,7 +284,6 @@ class StatsForROVTeamModal extends Component {
       moment.duration(lowering_stat_totals.on_bottom_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.ascent_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.recovery_duration).format('HH:mm:ss', { trim: false }),
-      lowering_stat_totals.samples_collected,
       lowering_stat_totals.max_depth
     ])
 
@@ -349,10 +316,9 @@ class StatsForROVTeamModal extends Component {
           <th>Deck to Deck</th>
           <th>Deployment</th>
           <th>Descent</th>
-          <th>Seabed</th>
+          <th>Survey Depth</th>
           <th>Ascent</th>
           <th>Recovery</th>
-          <th>Samples</th>
           <th>Max Depth</th>
         </tr>
       </thead>
@@ -369,7 +335,6 @@ class StatsForROVTeamModal extends Component {
           <td>{`${moment.duration(stat.on_bottom_duration).format('HH:mm:ss', { trim: false })}`}</td>
           <td>{`${moment.duration(stat.ascent_duration).format('HH:mm:ss', { trim: false })}`}</td>
           <td>{`${moment.duration(stat.recovery_duration).format('HH:mm:ss', { trim: false })}`}</td>
-          <td>{stat.samples_collected}</td>
           <td>{stat.max_depth}</td>
         </tr>
       )
@@ -382,7 +347,6 @@ class StatsForROVTeamModal extends Component {
       totals.on_bottom_duration += lowering.on_bottom_duration;
       totals.ascent_duration += lowering.ascent_duration;
       totals.recovery_duration += lowering.recovery_duration;
-      totals.samples_collected += lowering.samples_collected;
       totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
 
       return totals
@@ -394,7 +358,6 @@ class StatsForROVTeamModal extends Component {
       on_bottom_duration: 0,
       ascent_duration: 0,
       recovery_duration: 0,
-      samples_collected: 0,
       max_depth: 0
     })
 
@@ -408,7 +371,6 @@ class StatsForROVTeamModal extends Component {
         <th>{`${moment.duration(lowering_stat_totals.on_bottom_duration).format('HH:mm:ss', { trim: false })}`}</th>
         <th>{`${moment.duration(lowering_stat_totals.ascent_duration).format('HH:mm:ss', { trim: false })}`}</th>
         <th>{`${moment.duration(lowering_stat_totals.recovery_duration).format('HH:mm:ss', { trim: false })}`}</th>
-        <th>{lowering_stat_totals.samples_collected}</th>
         <th>{lowering_stat_totals.max_depth}</th>
       </tr>
     )
@@ -424,6 +386,25 @@ class StatsForROVTeamModal extends Component {
     )
   }
 
+  renderStageBoundary(milestoneNames) {
+    return milestoneNames[0];
+  }
+
+  renderStageDefinitions() {
+    return (
+      <div className="small text-body mb-2">
+        <strong>Stage Definitions:</strong>
+        {STAGE_DEFINITIONS.map((stage) => {
+          return (
+            <div key={stage.label}>
+              {stage.label}: {this.renderStageBoundary(stage.start)} to {this.renderStageBoundary(stage.stop)}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   render() {
 
     const { show, handleHide, cruise } = this.props
@@ -434,11 +415,12 @@ class StatsForROVTeamModal extends Component {
       return (
         <Modal size="lg" show={show} onHide={handleHide}>
           <Modal.Header closeButton>
-            <Modal.Title as="h5">Stats for ROV Team</Modal.Title>
+            <Modal.Title as="h5">Cruise Metrics</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
           {statsTable}
+          {this.renderStageDefinitions()}
           <span className='text-warning'>{this.state.status_msg}</span><span className="float-right"><Button variant="outline-primary" size="sm" onClick={this.exportDataToFile}>Export</Button></span>
           </Modal.Body>
         </Modal>
@@ -450,4 +432,4 @@ class StatsForROVTeamModal extends Component {
   }
 }
 
-export default connectModal({ name: 'statsForROVTeam' })(StatsForROVTeamModal)
+export default connectModal({ name: 'cruiseMetrics' })(CruiseMetricsModal)
