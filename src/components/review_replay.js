@@ -507,7 +507,7 @@ class ReviewReplay extends Component {
           </Col>
         </Row>
         <Row>
-          <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} sm={4} lg={3} />
+          <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} sm={6} lg={6} xl={6} />
           <AuxDataCards aux_data={aux_data} sm={4} lg={3} />
           <EventOptionsCard event={this.props.event.selected_event} sm={4} lg={3} />
           {event_free_text_card}
