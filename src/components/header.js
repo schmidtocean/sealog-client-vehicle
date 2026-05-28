@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Nav, Navbar, NavDropdown } from 'react-bootstrap'
+import { Nav, Navbar, NavDropdown, Image } from 'react-bootstrap'
 import PropTypes from 'prop-types'
-import { HEADER_TITLE, RECAPTCHA_SITE_KEY, DISABLE_EVENT_LOGGING } from '../client_settings'
+import { HEADER_TITLE, RECAPTCHA_SITE_KEY, DISABLE_EVENT_LOGGING, ROOT_PATH } from '../client_settings'
 import { get_custom_vars, update_custom_var } from '../api'
 import { _Cruises_, _Lowerings_ } from '../vocab'
 import * as mapDispatchToProps from '../actions'
@@ -151,6 +151,7 @@ class Header extends Component {
       <Navbar collapseOnSelect expand='md' variant='dark'>
         <Navbar.Brand className='ms-4 clickable' onClick={this.props.gotoHome}>
           {HEADER_TITLE}
+          <Image style={{ height: '40px' }} src={`${ROOT_PATH}images/sub.png`} />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls='responsive-navbar-nav' />
         <Navbar.Collapse id='responsive-navbar-nav' className='justify-content-end'>

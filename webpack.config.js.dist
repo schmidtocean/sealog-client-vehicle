@@ -112,7 +112,8 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       title: HEADER_TITLE,
-      template: './src/assets/index.html'
+      template: './src/assets/index.html',
+      favicon: './src/assets/favicon.ico'
     }),
     new MiniCssExtractPlugin({
       filename: 'style/[[name].[contenthash].css'
