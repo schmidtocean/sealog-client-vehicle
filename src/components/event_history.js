@@ -11,7 +11,7 @@ import ImageryCards from './imagery_cards'
 import ImagePreviewModal from './image_preview_modal'
 import { Client } from '@hapi/nes/lib/client'
 import { EXCLUDE_AUX_DATA_SOURCES, IMAGES_AUX_DATA_SOURCES, AUX_DATA_SORT_ORDER, WS_ROOT_URL } from '../client_settings'
-import { get_events, get_event_exports, handle_image_file_download } from '../api'
+import { get_events, get_event_exports, get_custom_vars, handle_image_file_download } from '../api'
 import { buildEventQuery, connectWSClient, resolveStartTS } from '../utils'
 import * as mapDispatchToProps from '../actions'
 
@@ -36,7 +36,8 @@ class EventHistory extends Component {
       showEventHistory: true,
       showExpandedEventHistory: false,
       filterTimer: null,
-      eventFilter: null
+      eventFilter: null,
+      cameraStatuses: {}
     }
 
     this.client = new Client(`${WS_ROOT_URL}`)
@@ -57,6 +58,7 @@ class EventHistory extends Component {
       this.initStartTS()
       this.fetchEvents()
       this.connectToWS()
+      this.fetchCameraStatuses()
     }
   }
 
@@ -119,13 +121,34 @@ class EventHistory extends Component {
       }
     }
 
+    const cameraStatusHandler = (update) => {
+      const match = update.custom_var_name && update.custom_var_name.match(/^(\w+)RecState$/)
+      if (match) {
+        this.setState((prev) => ({
+          cameraStatuses: { ...prev.cameraStatuses, [match[1]]: update.custom_var_value }
+        }))
+      }
+    }
+
     await connectWSClient(this.client, {
       '/ws/status/newEvents': updateHandler,
       '/ws/status/updateEvents': updateHandler,
       '/ws/status/deleteEvents': updateHandler,
       '/ws/status/newEventAuxData': updateAuxDataHandler,
-      '/ws/status/updateEventAuxData': updateAuxDataHandler
+      '/ws/status/updateEventAuxData': updateAuxDataHandler,
+      '/ws/status/updateCustomVars': cameraStatusHandler
     })
+  }
+
+  async fetchCameraStatuses() {
+    const vars = await get_custom_vars({ name: ['scicamRecState', 'sitcamRecState'] })
+    if (!vars || !vars.length) return
+    const cameraStatuses = {}
+    vars.forEach((v) => {
+      const match = v.custom_var_name.match(/^(\w+)RecState$/)
+      if (match) cameraStatuses[match[1]] = v.custom_var_value
+    })
+    this.setState({ cameraStatuses })
   }
 
   async initStartTS() {
@@ -356,7 +379,13 @@ class EventHistory extends Component {
         (image_data_sources.length || aux_data.length || event_free_text_card || this.state.event.event_options) ? (
           <Card.Body className='pt-2 pb-1'>
             <Row>
-              <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={4} lg={3} />
+              <ImageryCards
+                image_data_sources={image_data_sources}
+                cameraStatuses={this.state.cameraStatuses}
+                onClick={this.handleImagePreviewModal}
+                md={6}
+                lg={6}
+              />
               <AuxDataCards aux_data={aux_data} md={4} lg={3} />
               <EventOptionsCard event={this.state.event} md={4} lg={3} />
               {event_free_text_card}

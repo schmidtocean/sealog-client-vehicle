@@ -3,6 +3,13 @@ import PropTypes from 'prop-types'
 import { getImageUrl, handleMissingImage } from '../utils'
 import { Card, Col, Image } from 'react-bootstrap'
 
+const getCameraStatusKey = (source) => {
+  const normalized = `${source}`.toLowerCase()
+  if (normalized.includes('scicam')) return 'scicam'
+  if (normalized.includes('sitcam')) return 'sitcam'
+  return null
+}
+
 class ImageryCard extends Component {
   constructor(props) {
     super(props)
@@ -35,7 +42,12 @@ class ImageryCard extends Component {
       >
         <Card className='event-image-data-card' id={`image_${this.props.source}`}>
           <Image fluid onError={this.handleMissingImage} src={this.props.filepath} onClick={this.handleOnClick} />
-          <span className='ps-2'>{this.props.source}</span>
+          <span className='d-flex justify-content-between ps-2 pe-2'>
+            <span>{this.props.source}</span>
+            {this.props.cameraStatus === 'true' && <span className='text-success'>REC</span>}
+            {this.props.cameraStatus === 'false' && <span className='text-danger'>REC OFF</span>}
+            {this.props.cameraStatus === 'unavailable' && <span className='text-danger'>STATUS N/A</span>}
+          </span>
         </Card>
       </Col>
     )
@@ -45,6 +57,7 @@ class ImageryCard extends Component {
 ImageryCard.propTypes = {
   source: PropTypes.string.isRequired,
   filepath: PropTypes.string.isRequired,
+  cameraStatus: PropTypes.string,
   onClick: PropTypes.func,
   sm: PropTypes.number,
   md: PropTypes.number,
@@ -54,15 +67,18 @@ ImageryCard.propTypes = {
 
 class ImageryCards extends Component {
   render() {
+    const cameraStatuses = this.props.cameraStatuses || {}
     let imageryCards = []
     this.props.image_data_sources.forEach((image_data_source) => {
       for (let j = 0; j < image_data_source.data_array.length; j += 2) {
         const source = image_data_source.data_array[j].data_value
         const filepath = image_data_source.data_array[j + 1].data_value
+        const statusKey = getCameraStatusKey(source)
         imageryCards.push(
           <ImageryCard
             source={source}
             filepath={getImageUrl(filepath)}
+            cameraStatus={statusKey ? cameraStatuses[statusKey] : undefined}
             onClick={() => this.props.onClick(source, filepath)}
             key={`${image_data_source.data_source}_${j}_col`}
             sm={this.props.sm}
@@ -80,6 +96,7 @@ class ImageryCards extends Component {
 
 ImageryCards.propTypes = {
   image_data_sources: PropTypes.array.isRequired,
+  cameraStatuses: PropTypes.object,
   onClick: PropTypes.func,
   sm: PropTypes.number,
   md: PropTypes.number,
