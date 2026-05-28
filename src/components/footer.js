@@ -7,6 +7,7 @@ import prettyBytes from 'pretty-bytes'
 import { Nav, Navbar, NavbarCollapse } from 'react-bootstrap'
 import { get_custom_vars } from '../api'
 import { connectWSClient } from '../utils'
+import InstanceLink from './instance_link'
 import { WS_ROOT_URL, DISABLE_EVENT_LOGGING } from '../client_settings'
 import * as mapDispatchToProps from '../actions'
 
@@ -115,6 +116,7 @@ class Footer extends Component {
 
     return (
       <Navbar className='footer' collapseOnSelect expand='sm' variant='dark' fixed='bottom'>
+        <InstanceLink placement='left' instance='sealog-FKt' />
         <Navbar.Text className='ms-4'>
           {asnapStatus}
           {freeSpaceStatus}
@@ -137,6 +139,7 @@ class Footer extends Component {
             </span>
           </Nav>
         </NavbarCollapse>
+        <InstanceLink placement='right' instance='sealog-emp' />
       </Navbar>
     )
   }
