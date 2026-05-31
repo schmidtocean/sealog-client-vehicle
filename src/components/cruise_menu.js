@@ -1,13 +1,15 @@
 import React, { Component } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { connect } from 'react-redux'
-import { Accordion, Card, Col, Row } from 'react-bootstrap'
+import { Accordion, Card, Col, OverlayTrigger, Row, Tooltip } from 'react-bootstrap'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import ExportDropdown from './export_dropdown'
 import ReviewDropdown from './review_dropdown'
 import CopyCruiseToClipboard from './copy_cruise_to_clipboard'
 import CopyLoweringToClipboard from './copy_lowering_to_clipboard'
+import StatsForROVTeamModal from './stats_for_rov_team_modal'
+import SVProfileModal from './sv_profile_modal'
 import { MAIN_SCREEN_HEADER, MAIN_SCREEN_TXT } from '../client_settings'
 import { handle_cruise_file_download, handle_lowering_file_download } from '../api'
 import { ABORT_MILESTONE } from '../milestones'
@@ -31,6 +33,8 @@ class CruiseMenu extends Component {
     this.handleYearSelect = this.handleYearSelect.bind(this)
     this.handleCruiseSelect = this.handleCruiseSelect.bind(this)
     this.handleLoweringSelect = this.handleLoweringSelect.bind(this)
+    this.handleStatsForROVTeamModal = this.handleStatsForROVTeamModal.bind(this)
+    this.handleSVProfileModal = this.handleSVProfileModal.bind(this)
   }
 
   componentDidMount() {
@@ -130,6 +134,14 @@ class CruiseMenu extends Component {
       const activeLowering = this.props.lowerings.find((lowering) => lowering.id === id)
       this.setState({ activeLowering: activeLowering })
     }
+  }
+
+  handleStatsForROVTeamModal(cruise) {
+    this.props.showModal('statsForROVTeam', { cruise: cruise })
+  }
+
+  handleSVProfileModal(lowering) {
+    this.props.showModal('svProfile', { lowering: lowering })
   }
 
   renderCruiseFiles(files) {
@@ -254,6 +266,15 @@ class CruiseMenu extends Component {
           <Card.Header>
             {_Cruise_}:<span className='text-warning'> {this.state.activeCruise.cruise_id}</span>
             <div className='float-end'>
+              <OverlayTrigger placement='top' overlay={<Tooltip id='statsForROVTeamTooltip'>Stats for ROV Team</Tooltip>}>
+                <FontAwesomeIcon
+                  className='text-primary ps-1'
+                  onClick={() => this.handleStatsForROVTeamModal(this.state.activeCruise)}
+                  icon='table'
+                  fixedWidth
+                  role='button'
+                />
+              </OverlayTrigger>
               <CopyCruiseToClipboard className='ps-1' cruise={this.state.activeCruise} />
             </div>
           </Card.Header>
@@ -353,6 +374,15 @@ class CruiseMenu extends Component {
             {_Lowering_}:<span className='text-warning'> {this.state.activeLowering.lowering_id}</span>
             <span className='float-end'>
               <ReviewDropdown id='dropdown-review' className='pe-3' loweringID={this.state.activeLowering.id} />
+              <OverlayTrigger placement='top' overlay={<Tooltip id='svProfileTooltip'>SV Profile</Tooltip>}>
+                <FontAwesomeIcon
+                  className='text-primary ps-1'
+                  onClick={() => this.handleSVProfileModal(this.state.activeLowering)}
+                  icon='chart-line'
+                  fixedWidth
+                  role='button'
+                />
+              </OverlayTrigger>
               <CopyLoweringToClipboard lowering={this.state.activeLowering} />
               <ExportDropdown
                 id='dropdown-download'
@@ -615,6 +645,8 @@ class CruiseMenu extends Component {
   render() {
     return (
       <div className='mt-2'>
+        <StatsForROVTeamModal />
+        <SVProfileModal />
         <Row>
           <h4>{MAIN_SCREEN_HEADER}</h4>
           <p className='text-justify' style={{ whiteSpace: 'pre-wrap' }}>
@@ -643,7 +675,8 @@ CruiseMenu.propTypes = {
   fetchCruises: PropTypes.func.isRequired,
   fetchLowerings: PropTypes.func.isRequired,
   lowering: PropTypes.object.isRequired,
-  lowerings: PropTypes.array.isRequired
+  lowerings: PropTypes.array.isRequired,
+  showModal: PropTypes.func.isRequired
 }
 
 const mapStateToProps = (state) => {

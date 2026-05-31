@@ -57,6 +57,8 @@ import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay'
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus'
 import { faStepBackward } from '@fortawesome/free-solid-svg-icons/faStepBackward'
 import { faStepForward } from '@fortawesome/free-solid-svg-icons/faStepForward'
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine'
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable'
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes'
 import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'
 import { faVial } from '@fortawesome/free-solid-svg-icons/faVial'
@@ -87,6 +89,8 @@ library.add(
   faPlus,
   faStepBackward,
   faStepForward,
+  faChartLine,
+  faTable,
   faTimes,
   faTrash,
   faVial,

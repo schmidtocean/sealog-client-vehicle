@@ -12,6 +12,7 @@ import ImportFromFileModal from './import_from_file_modal'
 import CopyLoweringToClipboard from './copy_lowering_to_clipboard'
 import LoweringPermissionsModal from './lowering_permissions_modal'
 import LoweringStatsModal from './lowering_stats_modal'
+import SVProfileModal from './sv_profile_modal'
 import CustomPagination from './custom_pagination'
 import { USE_ACCESS_CONTROL } from '../client_settings'
 import { _Lowerings_, _Lowering_, _lowering_ } from '../vocab'
@@ -134,6 +135,10 @@ class Lowerings extends Component {
     this.props.fetchLowerings()
   }
 
+  handleSVProfileModal(lowering) {
+    this.props.showModal('svProfile', { lowering: lowering })
+  }
+
   handleSearchChange(event) {
     let fieldVal = event.target.value
     if (fieldVal !== '') {
@@ -242,6 +247,7 @@ class Lowerings extends Component {
     const showTooltip = <Tooltip id='showTooltip'>{_Lowering_} is hidden, click to show.</Tooltip>
     const hideTooltip = <Tooltip id='hideTooltip'>{_Lowering_} is visible, click to hide.</Tooltip>
     const permissionTooltip = <Tooltip id='permissionTooltip'>User permissions.</Tooltip>
+    const svProfileTooltip = <Tooltip id='svProfileTooltip'>Show downcast SV profile.</Tooltip>
 
     return this.state.filteredLowerings.map((lowering, index) => {
       if (index >= (this.state.activePage - 1) * maxLoweringsPerPage && index < this.state.activePage * maxLoweringsPerPage) {
@@ -332,6 +338,15 @@ class Lowerings extends Component {
               {permLink}
               {exportLink}
               {hiddenLink}
+              <OverlayTrigger placement='top' overlay={svProfileTooltip}>
+                <FontAwesomeIcon
+                  className='text-primary ps-1'
+                  onClick={() => this.handleSVProfileModal(lowering)}
+                  icon='chart-line'
+                  fixedWidth
+                  role='button'
+                />
+              </OverlayTrigger>
               {deleteLink}
               <CopyLoweringToClipboard lowering={lowering} />
             </td>
@@ -390,6 +405,7 @@ class Lowerings extends Component {
         <React.Fragment>
           <LoweringPermissionsModal onClose={this.props.fetchLowerings} />
           <LoweringStatsModal />
+          <SVProfileModal />
           <DeleteFileModal />
           <DeleteModal />
           <ExecuteModal />

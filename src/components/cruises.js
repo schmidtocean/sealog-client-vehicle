@@ -11,6 +11,7 @@ import ExecuteModal from './execute_modal'
 import ImportFromFileModal from './import_from_file_modal'
 import CopyCruiseToClipboard from './copy_cruise_to_clipboard'
 import CruisePermissionsModal from './cruise_permissions_modal'
+import StatsForROVTeamModal from './stats_for_rov_team_modal'
 import CustomPagination from './custom_pagination'
 import { USE_ACCESS_CONTROL } from '../client_settings'
 import { _Cruises_, _Cruise_, _cruise_ } from '../vocab'
@@ -125,6 +126,10 @@ class Cruises extends Component {
 
   handleCruiseImportClose() {
     this.props.fetchCruises()
+  }
+
+  handleStatsForROVTeamModal(cruise) {
+    this.props.showModal('statsForROVTeam', { cruise: cruise })
   }
 
   handleSearchChange(event) {
@@ -256,6 +261,7 @@ class Cruises extends Component {
     const showTooltip = <Tooltip id='showTooltip'>{_Cruise_} is hidden, click to show.</Tooltip>
     const hideTooltip = <Tooltip id='hideTooltip'>{_Cruise_} is visible, click to hide.</Tooltip>
     const permissionTooltip = <Tooltip id='permissionTooltip'>User permissions.</Tooltip>
+    const statsTooltip = <Tooltip id='statsTooltip'>Show {_cruise_} stats.</Tooltip>
 
     return this.state.filteredCruises.map((cruise, index) => {
       if (index >= (this.state.activePage - 1) * maxCruisesPerPage && index < this.state.activePage * maxCruisesPerPage) {
@@ -361,6 +367,15 @@ class Cruises extends Component {
               {permLink}
               {exportLink}
               {hiddenLink}
+              <OverlayTrigger placement='top' overlay={statsTooltip}>
+                <FontAwesomeIcon
+                  className='text-primary ps-1'
+                  onClick={() => this.handleStatsForROVTeamModal(cruise)}
+                  icon='table'
+                  fixedWidth
+                  role='button'
+                />
+              </OverlayTrigger>
               {deleteLink}
               <CopyCruiseToClipboard cruise={cruise} />
             </td>
@@ -424,6 +439,7 @@ class Cruises extends Component {
           <DeleteModal />
           <ExecuteModal />
           <ImportFromFileModal handleExit={this.handleCruiseImportClose} title='Import Cruises' insertItem={this._insertCruise} />
+          <StatsForROVTeamModal />
           <Row className='d-flex justify-content-center py-2'>
             {this.props.roles.includes('admin') ? (
               <Col className='px-1' sm={12} md={7} lg={6} xl={5}>
