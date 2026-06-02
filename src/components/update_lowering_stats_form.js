@@ -6,23 +6,24 @@ import { Button, Col, Form, Row} from 'react-bootstrap';
 import { renderDateTimePicker, renderTextField } from './form_elements';
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import { CUSTOM_LOWERING_NAME } from '../client_config';
 import * as mapDispatchToProps from '../actions';
 
 const timeFormat = "HH:mm:ss.SSS";
 const LOWERING_START_MILESTONE = 'lowering_start';
 const LOWERING_STOP_MILESTONE = 'lowering_stop';
 
+function isRequiredMilestone(key) {
+  return key === LOWERING_START_MILESTONE || key === LOWERING_STOP_MILESTONE;
+}
+
+function buildMilestoneValues(milestoneItems, milestones) {
+  return milestoneItems.reduce((values, milestone) => {
+    values[milestone.key] = { value: milestones[milestone.key] || null };
+    return values;
+  }, {});
+}
+
 class UpdateLoweringStatsForm extends Component {
-
-  constructor (props) {
-    super(props);
-
-    this.state = {
-      lowering_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : "Lowering"
-    }
-  }
-
   static propTypes = {
     handleFormSubmit: PropTypes.func.isRequired,
     handleHide: PropTypes.func.isRequired,
@@ -32,11 +33,8 @@ class UpdateLoweringStatsForm extends Component {
   };
 
   componentDidMount() {
-
     let initialValues = {
-      milestones: this.props.milestoneItems.map((milestone) => {
-        return { value: this.props.milestones[milestone.key] || null }
-      }),
+      milestones: buildMilestoneValues(this.props.milestoneItems, this.props.milestones),
       max_depth: (this.props.stats.max_depth) ? this.props.stats.max_depth : null,
       bbox_north: (this.props.stats.bounding_box.length == 4) ? this.props.stats.bounding_box[0] : null,
       bbox_east: (this.props.stats.bounding_box.length == 4) ? this.props.stats.bounding_box[1] : null,
@@ -47,62 +45,38 @@ class UpdateLoweringStatsForm extends Component {
     this.props.initialize(initialValues);
   }
 
-  componentWillUnmount() {
-  }
-
   formatDateValue(value) {
     return (value && value._isAMomentObject) ? value.toISOString() : value;
   }
 
   handleFormSubmit(formProps) {
 
-    let milestones = {}
-
-    this.props.milestoneItems.forEach((milestone, index) => {
-      const formMilestone = formProps.milestones && formProps.milestones[index];
+    const milestones = this.props.milestoneItems.reduce((milestones, milestone) => {
+      const formMilestone = formProps.milestones && formProps.milestones[milestone.key];
       milestones[milestone.key] = formMilestone ? this.formatDateValue(formMilestone.value) : null;
-    });
+      return milestones;
+    }, {});
 
-    let stats= {
+    const bbox = [formProps.bbox_north, formProps.bbox_east, formProps.bbox_south, formProps.bbox_west];
+    const stats = {
       max_depth: formProps.max_depth,
-    }
-
-    if((formProps.bbox_north == null || formProps.bbox_north == "") && (formProps.bbox_east == null || formProps.bbox_east == "") && (formProps.bbox_south == null || formProps.bbox_south == "") && (formProps.bbox_west == null || formProps.bbox_west == "")) {
-      stats.bounding_box=[]
-    }
-    else {
-      stats.bounding_box=[formProps.bbox_north, formProps.bbox_east, formProps.bbox_south, formProps.bbox_west]
+      bounding_box: bbox.every((value) => value == null || value == "") ? [] : bbox
     }
 
     this.props.handleFormSubmit(milestones, stats)
   }
 
-  renderTextField({ input, label, placeholder, required, meta: { touched, error } }) {
-    let requiredField = (required)? <span className='text-danger'> *</span> : ''
-    let placeholder_txt = (placeholder)? placeholder: label
-
-    return (
-      <Form.Group as={Row}>
-        <Form.Label column sm={4} xs={5}><span className="float-right">{label}{requiredField}</span></Form.Label>
-        <Col sm={8} xs={7}>
-          <Form.Control size="sm" type="text" {...input} placeholder={placeholder_txt} isInvalid={touched && error}/>
-          <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
-        </Col>
-      </Form.Group>
-    )
-  }
-
   render() {
 
     const { handleSubmit, submitting, valid, pristine } = this.props;
-    const milestoneFields = this.props.milestoneItems.map((milestone, index) => {
+    const milestoneFields = this.props.milestoneItems.map((milestone) => {
       return (
         <Form.Row className="justify-content-sm-center" key={milestone.key}>
           <Field
-            name={`milestones[${index}].value`}
+            name={`milestones.${milestone.key}.value`}
             component={renderDateTimePicker}
             label={`${milestone.label} Date/Time (UTC)`}
-            required={milestone.key === LOWERING_START_MILESTONE || milestone.key === LOWERING_STOP_MILESTONE}
+            required={isRequiredMilestone(milestone.key)}
             timeFormat={timeFormat}
             sm={11}
             md={11}
@@ -195,32 +169,32 @@ class UpdateLoweringStatsForm extends Component {
 function validate(formProps, props) {
 
   const errors = {};
-  const milestoneValues = formProps.milestones || [];
-  const setMilestoneError = (index, error) => {
+  const milestoneValues = formProps.milestones || {};
+  const setMilestoneError = (key, error) => {
     if(!errors.milestones) {
-      errors.milestones = [];
+      errors.milestones = {};
     }
 
-    errors.milestones[index] = { value: error };
+    errors.milestones[key] = { value: error };
   }
 
-  const startIndex = props.milestoneItems.findIndex((milestone) => milestone.key === LOWERING_START_MILESTONE);
-  const stopIndex = props.milestoneItems.findIndex((milestone) => milestone.key === LOWERING_STOP_MILESTONE);
+  const startMilestone = milestoneValues[LOWERING_START_MILESTONE];
+  const stopMilestone = milestoneValues[LOWERING_STOP_MILESTONE];
 
-  props.milestoneItems.forEach((milestone, index) => {
-    const value = milestoneValues[index] ? milestoneValues[index].value : null;
+  props.milestoneItems.forEach((milestone) => {
+    const value = milestoneValues[milestone.key] ? milestoneValues[milestone.key].value : null;
 
-    if((milestone.key === LOWERING_START_MILESTONE || milestone.key === LOWERING_STOP_MILESTONE) && (value == null || value === '')) {
-      setMilestoneError(index, 'Required');
+    if(isRequiredMilestone(milestone.key) && (value == null || value === '')) {
+      setMilestoneError(milestone.key, 'Required');
     }
     else if(value && !moment.utc(value).isValid()) {
-      setMilestoneError(index, 'Invalid timestamp');
+      setMilestoneError(milestone.key, 'Invalid timestamp');
     }
   });
 
-  if(startIndex >= 0 && stopIndex >= 0 && milestoneValues[startIndex] && milestoneValues[stopIndex] && milestoneValues[startIndex].value && milestoneValues[stopIndex].value) {
-    if(moment.utc(milestoneValues[stopIndex].value).isBefore(moment.utc(milestoneValues[startIndex].value))) {
-      setMilestoneError(stopIndex, 'Stop date must be later than start date');
+  if(startMilestone && stopMilestone && startMilestone.value && stopMilestone.value) {
+    if(moment.utc(stopMilestone.value).isBefore(moment.utc(startMilestone.value))) {
+      setMilestoneError(LOWERING_STOP_MILESTONE, 'Stop date must be later than start date');
     }
   }
 

@@ -29,6 +29,12 @@ const cookies = new Cookies();
 const MILESTONE_OPTION_NAME = 'milestone';
 const LOWERING_START_MILESTONE = 'lowering_start';
 const LOWERING_STOP_MILESTONE = 'lowering_stop';
+const LEGACY_MILESTONE_REPLACEMENTS = {
+  lowering_descending: ['Descent Initiated', 'Initial Descent'],
+  lowering_on_bottom: ['Reached Survey Depth', 'At Depth'],
+  lowering_off_bottom: ['Leaving Survey Depth'],
+  lowering_on_surface: ['Vehicle on Surface']
+};
 
 class SetLoweringStatsModal extends Component {
 
@@ -235,6 +241,12 @@ class SetLoweringStatsModal extends Component {
     return milestone ? milestone.label : this.formatMilestoneLabel(key);
   }
 
+  hasReplacementMilestone(key, displayedKeys) {
+    const replacementKeys = LEGACY_MILESTONE_REPLACEMENTS[key] || [];
+
+    return replacementKeys.some((replacementKey) => displayedKeys.has(replacementKey));
+  }
+
   getMilestoneItems() {
     const items = [
       { key: LOWERING_START_MILESTONE, label: `${this.state.lowering_name} Start` },
@@ -244,7 +256,9 @@ class SetLoweringStatsModal extends Component {
 
     Object.keys(this.state.milestones).forEach((key) => {
       if(key !== LOWERING_START_MILESTONE && key !== LOWERING_STOP_MILESTONE && !displayedKeys.has(key)) {
-        items.push({ key, label: this.formatMilestoneLabel(key) });
+        if(!this.hasReplacementMilestone(key, displayedKeys)) {
+          items.push({ key, label: this.formatMilestoneLabel(key) });
+        }
         displayedKeys.add(key);
       }
     });
