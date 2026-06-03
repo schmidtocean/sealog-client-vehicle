@@ -7,12 +7,12 @@ const API_ROOT_URL = (typeof window !== 'undefined') && `http://${window.locatio
 const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.hostname}:8200/ws`;
   
 // For local development against the production environment
-// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.23.9.25:8100/sealog-server`;
-// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.23.9.25:8100/ws`;
+// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.23.9.25:8200/sealog-server`;
+// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.23.9.25:8200/ws`;
 
 // For local development against the development environment
-// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.128.0.26:8100/sealog-server`;
-// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.128.0.26:8100/ws`;
+// const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.128.0.26:8200/sealog-server`;
+// const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.128.0.26:8200/ws`;
 
 // Change this if not hosting the client at the webserver's document root i.e. '/sealog/'
 const ROOT_PATH = "/sealog-emp/";
@@ -33,7 +33,7 @@ const LOGIN_IMAGE = "";
 // Text show on the main page above the cruise list.
 const MAIN_SCREEN_HEADER = "Welcome to Sealog";
 
-const MAIN_SCREEN_TXT = "Please select a cruise from the list below.  Once a cruise is selected please select a lowering from the list of lowerings associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a lowering will open the lowering informati>
+const MAIN_SCREEN_TXT = "Please select a cruise from the list below.  Once a cruise is selected please select a deployment from the list of deployments associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a deployment will open the deployment information panel.  At the bottom of the cruise information panel there will be links for proceeding to the deployment replay section, the deployment review section and the deployment gallery section of Sealog. If at any time you wish to return to this page please click the \"Review Cruises/Deployments\" text in upper navigation bar.";
 
 // Title displayed on the left side of the title bar
 const HEADER_TITLE = `Sealog v${Pkg.version} - Empress`;
