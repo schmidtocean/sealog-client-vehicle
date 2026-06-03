@@ -3,8 +3,8 @@ const Pkg = require('../package.json');
 // Use https:// and wss:// for secure servers
 
 // For clients running on the production (ship) or development environment
-const API_ROOT_URL = (typeof window !== 'undefined') && `http://${window.location.hostname}:8100/sealog-server`;
-const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.hostname}:8100/ws`;
+const API_ROOT_URL = (typeof window !== 'undefined') && `http://${window.location.hostname}:8200/sealog-server`;
+const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.hostname}:8200/ws`;
   
 // For local development against the production environment
 // const API_ROOT_URL = (typeof window !== 'undefined') && `http://10.23.9.25:8100/sealog-server`;
@@ -15,7 +15,7 @@ const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://${window.location.h
 // const WS_ROOT_URL = (typeof window !== 'undefined') && `ws://10.128.0.26:8100/ws`;
 
 // Change this if not hosting the client at the webserver's document root i.e. '/sealog/'
-const ROOT_PATH = "/sealog-sub/";
+const ROOT_PATH = "/sealog-emp/";
 
 // Where the images are hosted on the webserver.
 const IMAGE_PATH = "/files/images";
@@ -28,15 +28,15 @@ const RECAPTCHA_SITE_KEY = "";
 const LOGIN_SCREEN_TXT = "Sealog provides the Oceanographic Research community with an open-source tool for recording, reviewing, and exporting insitu scientific and operational observations.";
 
 // Image file shown on the login page.  This image needs to be saved in the ./dist/images folder
-const LOGIN_IMAGE = "Subastian_Profile.png";
+const LOGIN_IMAGE = "";
 
 // Text show on the main page above the cruise list.
 const MAIN_SCREEN_HEADER = "Welcome to Sealog";
 
-const MAIN_SCREEN_TXT = "Please select a cruise from the list below.  Once a cruise is selected please select a lowering from the list of lowerings associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a lowering will open the lowering information panel.  At the bottom of the cruise information panel there will be links for proceeding to the lowering replay section, the lowering review section and the lowering gallery section of Sealog. If at any time you wish to return to this page please click the \"Review Cruises/Lowerings\" text in upper navigation bar.";
+const MAIN_SCREEN_TXT = "Please select a cruise from the list below.  Once a cruise is selected please select a lowering from the list of lowerings associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a lowering will open the lowering informati>
 
 // Title displayed on the left side of the title bar
-const HEADER_TITLE = `Sealog v${Pkg.version} - Subastian`;
+const HEADER_TITLE = `Sealog v${Pkg.version} - Empress`;
 
 // Set default vessel
 const DEFAULT_VESSEL = "R/V Falkor (too)";
@@ -57,16 +57,16 @@ const CRUISE_ID_PLACEHOLDER = "i.e. FKt240101";
 const CRUISE_ID_REGEX = RegExp(/^FKt2[0-9][0-1][0-9][0-3][0-9]$/);
 
 // Placeholder text displayed in LoweringID textfield "i.e. CHR0001"
-const LOWERING_ID_PLACEHOLDER = "i.e. S0319";
+const LOWERING_ID_PLACEHOLDER = "i.e. E0319";
 
 // RegExp object to use when verifying LoweringID i.e. RegExp(/^CHR[0-9]{4}$/)
-const LOWERING_ID_REGEX = RegExp(/^S[0-9]{4}$/);
+const LOWERING_ID_REGEX = RegExp(/^E[0-9]{4}$/);
 
 // What to call "cruise/cruises", format: null OR ["single version","plural version"] use lowercase
 const CUSTOM_CRUISE_NAME = null;
 
 // What to call "lowering/lowerings", format: null OR ["single version","plural version"] use lowercase
-const CUSTOM_LOWERING_NAME = ["dive","dives"];
+const CUSTOM_LOWERING_NAME = ["deployment","deployments"];
 
 module.exports = {
   API_ROOT_URL,
