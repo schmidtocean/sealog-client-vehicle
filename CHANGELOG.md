@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.5] - 2026-07-14
+
+### Added
+- **Duplicate button for event templates** — a copy icon on each row in both the System and non-system event template tables creates a new template identical to the original with "Copy of " prepended to the event name
+- **Per-template event button color** — event templates can set an `event_button_color` field to override the button's Bootstrap variant in the event logging UI, falling back to the new `DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR` client setting (defaults to `primary`, preserving prior behavior) when unset
+
+### Internal
+- Updated `axios`, `@babel/*`, `concurrently`, `eslint-plugin-prettier`, `prettier`, `sass`, `webpack`, `webpack-cli`, and `webpack-dev-server`
+
 ## [2.4.3] - 2026-04-11
 
 ### Fixed
