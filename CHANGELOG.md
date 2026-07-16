@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.6] - 2026-07-16
+
+### Added
+- **Color-select form element** — the event template "Button Color" field now renders each option styled with its own Bootstrap variant (matching how the template button will actually appear), instead of a plain text `<select>`
+
+### Security
+- Pinned `uuid` (transitive dependency via `webpack-dev-server` → `sockjs`) to 11.1.1, resolving Dependabot alert #75
+
 ## [2.4.5] - 2026-07-14
 
 ### Added
