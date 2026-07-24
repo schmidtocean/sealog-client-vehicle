@@ -226,7 +226,7 @@ const validate = (formProps) => {
 
     let milestones = {}
     const dateObjects = dates.map((dateStr) => moment.utc(dateStr, dateFormat + ' ' + timeFormat))
-    for (let i = 0; i < dateObjects.length - 1; ) {
+    for (let i = 0; i < dateObjects.length - 1;) {
       const nextIndex = findNextValidIndex(dateObjects, i)
       if (nextIndex < 0) {
         i++

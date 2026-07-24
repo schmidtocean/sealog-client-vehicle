@@ -25,7 +25,7 @@ class InstanceLink extends Component {
     let imageFN = `${ROOT_PATH}images/fkt.png`
     if (this.props.instance === 'sealog-emp') {
       imageFN = `${ROOT_PATH}images/emp.png`
-    } else if (this.props.instance === 'sealog-Sub') {
+    } else if (this.props.instance === 'sealog-sub') {
       imageFN = `${ROOT_PATH}images/sub.png`
     }
 

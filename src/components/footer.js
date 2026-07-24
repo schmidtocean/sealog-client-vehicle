@@ -116,7 +116,7 @@ class Footer extends Component {
 
     return (
       <Navbar className='footer' collapseOnSelect expand='sm' variant='dark' fixed='bottom'>
-        <InstanceLink placement='left' instance='sealog-FKt' />
+        <InstanceLink placement='left' instance='sealog-fkt' />
         <Navbar.Text className='ms-4'>
           {asnapStatus}
           {freeSpaceStatus}
