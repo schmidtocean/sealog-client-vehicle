@@ -22,7 +22,7 @@ const WS_ROOT_URL = `${SERVER_TLS ? 'wss' : 'ws'}://${SERVER_HOSTNAME}:${SERVER_
 // This MUST match where the client is being hosted by the webserver.
 // Change this if not hosting the client at the webserver's document root
 // i.e. '/sealog/'
-const ROOT_PATH = '/sealog-Sub/'
+const ROOT_PATH = '/sealog-sub/'
 
 // Where the images are hosted on the webserver.
 const IMAGE_PATH = '/files/images'
@@ -38,7 +38,7 @@ const LOGIN_SCREEN_TXT =
 // Optional image file shown on login page. Will appear under the
 // LOGIN_SCREEN_TXT. This image must end in ".jpg", "jpeg", ".png" format and
 // located in the ./assets/images folder
-const LOGIN_IMAGE = 'sub.png'
+const LOGIN_IMAGE = 'Subastian_Profile.png'
 
 // Text show on the main page above the cruise list.
 const MAIN_SCREEN_HEADER = 'Welcome to Sealog'
@@ -104,17 +104,34 @@ const EXCLUDE_AUX_DATA_SOURCES = []
 // Optional list of auxdata datasources that should be interpreted as imagery
 // and formatted as such in the event history, lowering replay and lowering
 // gallery.
-const IMAGES_AUX_DATA_SOURCES = ['eventFileAttachments', 'framegrabber']
+const IMAGES_AUX_DATA_SOURCES = ['eventFileAttachments', 'vehicleRealtimeFramegrabberData']
 
 // Optional list defining how to order auxdata data sources in the event
 // history and lowering replay
-const AUX_DATA_SORT_ORDER = ['eventFileAttachments', 'vehicleRealtimeNavData']
+const AUX_DATA_SORT_ORDER = [
+  'eventFileAttachments',
+  'vehicleRealtimeNavData',
+  'vehicleRealtimeUSBLData',
+  'vehicleRealtimeParoData',
+  'vehicleRealtimeCTDData',
+  'vehicleRealtimeCTDUVSVXData',
+  'vehicleRealtimeO2Data',
+  'vesselRealtimeNavData'
+]
 
 // Optional key/value pairs for how to format auxdata data source names in
 // event history and event replay.
 // Format: {<auxdata_datasource>: <display text>}.
 // i.e. { vehicleRealtimeCTDData: 'Vehicle Realtime CTD Data', ... }
-const AUX_DATA_DATASOURCE_REPLACE = { vehicleRealtimeNavData: 'Vessel Position' }
+const AUX_DATA_DATASOURCE_REPLACE = {
+  vehicleRealtimeCTDData: 'Vehicle CTD (SeaCAT)',
+  vehicleRealtimeCTDUVSVXData: 'Vehicle CTD (UVSVX)',
+  vehicleRealtimeNavData: 'Vehicle Position (Sprint)',
+  vehicleRealtimeO2Data: 'Vehicle O2',
+  vehicleRealtimeParoData: 'Vehicle Depth (Paro)',
+  vehicleRealtimeUSBLData: 'Vehicle Position (USBL)',
+  vesselRealtimeNavData: 'Vessel Position'
+}
 
 // Optional list defining how to order event template categories
 // i.e. ['science','problem','vehicle']
