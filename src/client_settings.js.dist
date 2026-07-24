@@ -22,7 +22,7 @@ const WS_ROOT_URL = `${SERVER_TLS ? 'wss' : 'ws'}://${SERVER_HOSTNAME}:${SERVER_
 // This MUST match where the client is being hosted by the webserver.
 // Change this if not hosting the client at the webserver's document root
 // i.e. '/sealog/'
-const ROOT_PATH = '/'
+const ROOT_PATH = '/sealog-Sub/'
 
 // Where the images are hosted on the webserver.
 const IMAGE_PATH = '/files/images'
@@ -38,7 +38,7 @@ const LOGIN_SCREEN_TXT =
 // Optional image file shown on login page. Will appear under the
 // LOGIN_SCREEN_TXT. This image must end in ".jpg", "jpeg", ".png" format and
 // located in the ./assets/images folder
-const LOGIN_IMAGE = null
+const LOGIN_IMAGE = 'sub.png'
 
 // Text show on the main page above the cruise list.
 const MAIN_SCREEN_HEADER = 'Welcome to Sealog'
@@ -49,10 +49,10 @@ const MAIN_SCREEN_TXT =
   'Please select a cruise from the list below. Selecting a cruise will open the cruise information panel. At the bottom of the cruise information panel there will be links for selecting a lowering. Selecting a lowering will open the lowering information panel. At the bottom of the lowering information panel there will be links proceeding to the lowering replay section, the lowering map section and the lowering gallery section of Sealog. If at any time you wish to return to this page please click the "Review Cruises/Lowerings" text in upper navigation bar.'
 
 // Text displayed on the left side of the title bar
-const HEADER_TITLE = `Sealog for Vehicles v${Pkg.version}`
+const HEADER_TITLE = `Sealog v${Pkg.version} for`
 
 // Default vessel used when created new cruises
-const DEFAULT_VESSEL = 'R/V Discovery'
+const DEFAULT_VESSEL = 'R/V Falkor (too)'
 
 // Add cruise-level and lowering-level authentication.
 // This needs to match the 'useAccessControl' setting on the sealog-server.
@@ -64,12 +64,12 @@ const DISABLE_EVENT_LOGGING = false
 // Optional placeholder text displayed in CruiseID textfield.
 // This is just a helpful hint to user on how to properly format the cruise ID.
 // i.e. OXR20210101
-const CRUISE_ID_PLACEHOLDER = null
+const CRUISE_ID_PLACEHOLDER = 'e.g. FKt260101'
 
 // Optional RegExp object to use when verifying a cruise ID.
 // Non-compliant cruise ID are allowed but a warning message will be shown.
 // i.e. RegExp(/^OXR20[0-9]{2}[0-1][0-9][0-3][0-9]$/)
-const CRUISE_ID_REGEX = null
+const CRUISE_ID_REGEX = RegExp(/^FKt[2-3][0-9][0-1][0-9][0-3][0-9]$/)
 
 // Optional customization for cruise nominclarture
 // Format: ["single version","plural version"]. Specify lowercase versions,
@@ -80,18 +80,18 @@ const CUSTOM_CRUISE_NAME = null
 // Optional placeholder text displayed in LoweringID textfield.
 // This is just a helpful hint to user on how to properly format the lowering ID
 // i.e. CHR0001
-const LOWERING_ID_PLACEHOLDER = null
+const LOWERING_ID_PLACEHOLDER = 'e.g. S0001'
 
 // Optional RegExp object to use when verifying a lowering ID.
 // Non-compliant lowering ID are allowed but a warning message will be shown.
 // i.e. RegExp(/^CHR[0-9]{4}$/)
-const LOWERING_ID_REGEX = null
+const LOWERING_ID_REGEX = RegExp(/^S[0-9]{4}$/)
 
 // Optional customization for lowering nominclarture
 // Format: ["single version","plural version"]. Specify lowercase versions,
 // will be capitalized within the client as needed.
 // Default is ['lowering', 'lowerings']
-const CUSTOM_LOWERING_NAME = null
+const CUSTOM_LOWERING_NAME = ['dive', 'dives']
 
 // List of auxdata datasources that should be interpreted as vehicle position.
 // List should be defined in order of importance
@@ -114,7 +114,7 @@ const AUX_DATA_SORT_ORDER = ['eventFileAttachments', 'vehicleRealtimeNavData']
 // event history and event replay.
 // Format: {<auxdata_datasource>: <display text>}.
 // i.e. { vehicleRealtimeCTDData: 'Vehicle Realtime CTD Data', ... }
-const AUX_DATA_DATASOURCE_REPLACE = null
+const AUX_DATA_DATASOURCE_REPLACE = { vehicleRealtimeNavData: 'Vessel Position' }
 
 // Optional list defining how to order event template categories
 // i.e. ['science','problem','vehicle']
