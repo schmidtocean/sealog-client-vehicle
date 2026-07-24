@@ -470,7 +470,12 @@ class ReviewReplay extends Component {
     ) : null
 
     const image_data_sources = this.props.event.selected_event.aux_data
-      ? this.props.event.selected_event.aux_data.filter((aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source))
+      ? this.props.event.selected_event.aux_data.filter(
+          (aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source) && aux_data.data_source !== 'eventFileAttachments'
+        )
+      : []
+    const attachment_image_data_sources = this.props.event.selected_event.aux_data
+      ? this.props.event.selected_event.aux_data.filter((aux_data) => aux_data.data_source === 'eventFileAttachments')
       : []
     const aux_data = this.props.event.selected_event.aux_data
       ? this.props.event.selected_event.aux_data.filter((data) => !excludeAuxDataSources.includes(data.data_source))
@@ -507,7 +512,8 @@ class ReviewReplay extends Component {
           </Col>
         </Row>
         <Row>
-          <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} sm={6} lg={6} xl={6} />
+          <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={6} lg={6} xl={6} />
+          <ImageryCards image_data_sources={attachment_image_data_sources} onClick={this.handleImagePreviewModal} sm={4} lg={3} />
           <AuxDataCards aux_data={aux_data} sm={4} lg={3} />
           <EventOptionsCard event={this.props.event.selected_event} sm={4} lg={3} />
           {event_free_text_card}

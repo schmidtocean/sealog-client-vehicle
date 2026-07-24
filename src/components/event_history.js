@@ -351,7 +351,13 @@ class EventHistory extends Component {
     ) : null
 
     const image_data_sources = this.state.event.aux_data
-      ? this.state.event.aux_data.filter((aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source))
+      ? this.state.event.aux_data.filter(
+          (aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source) && aux_data.data_source !== 'eventFileAttachments'
+        )
+      : []
+
+    const attachment_image_data_sources = this.state.event.aux_data
+      ? this.state.event.aux_data.filter((aux_data) => aux_data.data_source === 'eventFileAttachments')
       : []
 
     const aux_data = this.state.event.aux_data
@@ -385,6 +391,14 @@ class EventHistory extends Component {
                 onClick={this.handleImagePreviewModal}
                 md={6}
                 lg={6}
+                xl={6}
+              />
+              <ImageryCards
+                image_data_sources={attachment_image_data_sources}
+                cameraStatuses={this.state.cameraStatuses}
+                onClick={this.handleImagePreviewModal}
+                md={4}
+                lg={3}
               />
               <AuxDataCards aux_data={aux_data} md={4} lg={3} />
               <EventOptionsCard event={this.state.event} md={4} lg={3} />

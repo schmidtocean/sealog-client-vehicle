@@ -59,7 +59,12 @@ class EventShowDetailsModal extends Component {
     ) : null
 
     const image_data_sources = this.state.event.aux_data
-      ? this.state.event.aux_data.filter((aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source))
+      ? this.state.event.aux_data.filter(
+          (aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source) && aux_data.data_source !== 'eventFileAttachments'
+        )
+      : []
+    const attachment_image_data_sources = this.state.event.aux_data
+      ? this.state.event.aux_data.filter((aux_data) => aux_data.data_source === 'eventFileAttachments')
       : []
     const aux_data = this.state.event.aux_data
       ? this.state.event.aux_data.filter((data) => !excludeAuxDataSources.includes(data.data_source))
@@ -81,7 +86,14 @@ class EventShowDetailsModal extends Component {
             </Modal.Header>
             <Modal.Body className='pt-2 pb-0'>
               <Row>
-                <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={6} lg={4} xl={3} />
+                <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={6} lg={6} xl={6} />
+                <ImageryCards
+                  image_data_sources={attachment_image_data_sources}
+                  onClick={this.handleImagePreviewModal}
+                  md={6}
+                  lg={4}
+                  xl={3}
+                />
                 <AuxDataCards aux_data={aux_data} md={6} lg={4} xl={3} />
                 <EventOptionsCard event={this.state.event} md={6} lg={4} xl={3} />
                 {event_free_text_card}
