@@ -21,13 +21,13 @@ node_modules/
 # Output Directory
 /dist
 
-# CLient Config
+# Client Config, handle this via symlink to .dist version
 /src/client_settings.js
 
-# Maptile Config
+# Maptile Config, handle this via symlink to .dist version
 /src/map_tilelayers.js
 
-# Milestone Config
+# Milestone Config, handle this via symlink to .dist version
 /src/milestones.js
 
 # Docker-related files
@@ -35,7 +35,7 @@ Dockerfile
 docker-compose.yml
 nginx/nginx.conf
 
-# Webpack Config
+# Webpack Config, handle this via symlink to .dist version
 webpack.config.js
 
 CLAUDE.md
