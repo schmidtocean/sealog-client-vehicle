@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { ButtonToolbar, Container, Row, Col, Tabs, Tab, Form } from 'react-bootstrap'
+import { ButtonToolbar, Container, Row, Col, Tabs, Tab, Form, FormControl } from 'react-bootstrap'
 import PropTypes from 'prop-types'
 import EventShowDetailsModal from './event_show_details_modal'
 import GalleryTab from './gallery_tab'
@@ -17,7 +17,9 @@ class ReviewGallery extends Component {
     this.state = {
       fetching: false,
       aux_data: {},
-      maxImagesPerPage: 16
+      maxImagesPerPage: 16,
+      filterTimer: null,
+      eventFilter: null
     }
 
     this.formRef = React.createRef()
@@ -25,6 +27,7 @@ class ReviewGallery extends Component {
     this.toggleASNAP = this.toggleASNAP.bind(this)
     this.handleImageCountChange = this.handleImageCountChange.bind(this)
     this.handleTabSelect = this.handleTabSelect.bind(this)
+    this.handleSearchChange = this.handleSearchChange.bind(this)
   }
 
   async componentDidMount() {
@@ -37,8 +40,8 @@ class ReviewGallery extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.event.hideASNAP !== this.props.event.hideASNAP) {
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.event.hideASNAP !== this.props.event.hideASNAP || prevState.eventFilter !== this.state.eventFilter) {
       this.initLoweringImages(this.props.match.params.id)
     }
   }
@@ -51,9 +54,10 @@ class ReviewGallery extends Component {
   async initLoweringImages(id, auxDatasourceFilter = IMAGES_AUX_DATA_SOURCES) {
     this.setState({ fetching: true })
 
-    let query = {
+    const query = {
       datasource: auxDatasourceFilter,
-      value: this.props.event.hideASNAP ? ['!ASNAP'] : null
+      value: this.props.event.hideASNAP ? ['!ASNAP'] : null,
+      fulltext: this.state.eventFilter
     }
 
     const aux_data = await get_event_aux_data_by_lowering(query, id)
@@ -84,6 +88,16 @@ class ReviewGallery extends Component {
     if (event) {
       event.currentTarget.blur()
     }
+  }
+
+  handleSearchChange(event) {
+    let eventFilterValue = event.target.value !== '' ? event.target.value : null
+    clearTimeout(this.state.filterTimer)
+    this.setState({
+      filterTimer: setTimeout(() => {
+        this.setState({ eventFilter: eventFilterValue })
+      }, 500)
+    })
   }
 
   renderGalleries() {
@@ -152,6 +166,9 @@ class ReviewGallery extends Component {
             <span className='me-2 text-primary float-end clickable' style={{ fontSize: '.85rem' }} onClick={this.toggleASNAP}>
               {this.props.event.hideASNAP ? 'Show ASNAP' : 'Hide ASNAP'}
             </span>
+            <Form className='float-end me-2'>
+              <FormControl size='sm' type='text' placeholder='Search' onChange={this.handleSearchChange} />
+            </Form>
           </span>
         </Row>
         <Row>
