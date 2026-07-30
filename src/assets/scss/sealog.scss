@@ -15,9 +15,8 @@ $input-border-radius: 2px;
 }
 
 // Import fonts
-// @import "~@fontsource/open-sans/300.css"; // Weight 300.
-// @import "~@fontsource/open-sans/400.css"; // Weight 400.
-// @import "~@fontsource/open-sans/700.css"; // Weight 700.
+@import "~@fontsource/roboto/400.css"; // Weight 400.
+@import "~@fontsource/roboto/700.css"; // Weight 700.
 
 // Import FontAwesome
 // @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
