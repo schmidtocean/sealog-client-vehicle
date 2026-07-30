@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.8] - 2026-07-30
+
+### Fixed
+- **Broken CSS in production builds** — `MiniCssExtractPlugin`'s output filename template had a stray duplicated bracket, producing CSS files with a literal `[` in the name and a URL-encoded href in `index.html`
+- **Roboto font unreachable on network-restricted deployments** — the compiled CSS pulled Roboto from `fonts.googleapis.com` at page-load time; it's now self-hosted via the `@fontsource/roboto` package and bundled by webpack
+
 ## [2.4.7] - 2026-07-25
 
 ### Added
