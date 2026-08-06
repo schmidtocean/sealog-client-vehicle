@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.9] - 2026-08-06
+
+### Fixed
+- **Event template dropdown/checkbox/radio default values falsely flagged invalid** — the comma-separated options list wasn't trimmed before being compared against the default value, so whitespace after commas (e.g. `foo, bar`) caused valid defaults to fail validation
+- **Only the first checkbox default value was pre-checked** — the same untrimmed split caused all but the first value in a multi-value checkbox default to fail to match against the option list, leaving them unchecked
+
 ## [2.4.8] - 2026-07-30
 
 ### Fixed
