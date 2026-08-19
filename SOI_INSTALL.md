@@ -31,12 +31,12 @@ This should clone the repo to a directory called `~/sealog-client-Sub`
 
 ```
 cd ~/sealog-client-Sub
-cp ./src/client_config.js.dist ./src/client_config.js
+cp ./src/client_settings.js.dist ./src/client_settings.js
 ```
 
 ### Modify the configuration file
 
-Set the `API_ROOT_URL`, `WS_ROOT_URL` values in the `./sealog-client-Sub/src/client_config.js` file to match the target server environment.
+Set the `SERVER_TLS`, `SERVER_HOSTNAME`, `SERVER_PORT` values in the `./sealog-client-Sub/src/client_settings.js` file to match the target server environment.
 
 ### Create a deployment file
 ```

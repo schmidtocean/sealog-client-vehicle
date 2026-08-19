@@ -1,11 +1,12 @@
-const { ROOT_PATH, HEADER_TITLE } = require('./src/client_config');
-const webpack = require('webpack');
-const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { ROOT_PATH, HEADER_TITLE } = require('./src/client_settings')
+const webpack = require('webpack')
+const path = require('path')
+const CopyPlugin = require('copy-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = {
+  devtool: 'source-map',
   devServer: {
     port: 8080,
     static: './dist',
@@ -15,10 +16,36 @@ module.exports = {
     }
   },
   output: {
-    path: path.join(__dirname, '/dist'),
-    filename: 'js/index.bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'js/[name].[contenthash].js',
     publicPath: ROOT_PATH,
     clean: true
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        moment: {
+          test: /[\\/]node_modules[\\/](moment)/, // Target only the 'moment' library
+          name: 'moment', // Name of the output file (moment.[contenthash].js)
+          chunks: 'all', // Apply to both dynamic and static imports
+          priority: 10 // Higher priority to ensure moment is separated first
+        },
+        leaflet: {
+          test: /[\\/]node_modules[\\/](leaflet)/, // Target only the 'leaflet' library
+          name: 'leaflet', // Name of the output file (leaflet.[contenthash].js)
+          chunks: 'all', // Apply to both dynamic and static imports
+          priority: 10 // Higher priority to ensure leaflet is separated first
+        },
+        filepond: {
+          test: /[\\/]node_modules[\\/](filepond)/, // Target only the 'filepond' library
+          name: 'filepond', // Name of the output file (filepond.[contenthash].js)
+          chunks: 'all', // Apply to both dynamic and static imports
+          priority: 10 // Higher priority to ensure filepond is separated first
+        }
+      }
+    },
+    runtimeChunk: 'single'
   },
   module: {
     rules: [
@@ -36,22 +63,25 @@ module.exports = {
       {
         test: /\.s[ac]ss$/i,
         use: [
-          process.env.NODE_ENV !== "production"
-          ? "style-loader"
-          : MiniCssExtractPlugin.loader,
+          process.env.NODE_ENV !== 'production' ? 'style-loader' : MiniCssExtractPlugin.loader,
           {
-            loader: "css-loader",
-            options: {
-              sourceMap: true,
-            }
-          },
-          {
-            loader: "sass-loader",
+            loader: 'css-loader',
             options: {
               sourceMap: true
             }
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              api: 'modern',
+              sourceMap: true,
+              sassOptions: {
+                quietDeps: true,
+                silenceDeprecations: ['import', 'color-functions', 'global-builtin']
+              }
+            }
           }
-        ],
+        ]
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -78,21 +108,28 @@ module.exports = {
   },
   plugins: [
     new webpack.ProvidePlugin({
-      process: 'process/browser.js',
+      process: 'process/browser.js'
     }),
     new HtmlWebpackPlugin({
       title: HEADER_TITLE,
-      template: './src/assets/index.html',
+      template: './src/assets/index.html'
     }),
     new MiniCssExtractPlugin({
-      filename: "style/[name].css",
-      chunkFilename: "style/[id].css",
+      filename: 'style/[name].[contenthash].css'
     }),
     new CopyPlugin({
       patterns: [
-        { from: path.resolve(__dirname, 'src/assets/favicon.ico'), to: 'favicon.ico', noErrorOnMissing: true },
-        { from: path.resolve(__dirname, 'src/assets/images/'), to: 'images' },
+        { from: path.resolve(__dirname, 'src/assets/images/favicon.ico'), to: 'favicon.ico', noErrorOnMissing: true },
+        { from: path.resolve(__dirname, 'src/assets/images/'), to: 'images' }
       ]
-    }),
+    })
   ],
+  performance: {
+    hints: false
+  },
+  resolve: {
+    fallback: {
+      'process/browser': require.resolve('process/browser')
+    }
+  }
 }

@@ -1,360 +1,434 @@
-import React, { Component } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { connect } from 'react-redux';
-import { Row, Button, Col, Card, Form, FormControl, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import CreateUser from './create_user';
-import UpdateUser from './update_user';
-import DisplayUserTokenModal from './display_user_token_modal';
-import NonSystemUsersWipeModal from './non_system_users_wipe_modal';
-import ImportUsersModal from './import_users_modal';
-import DeleteUserModal from './delete_user_modal';
-import UserPermissionsModal from './user_permissions_modal';
-import CustomPagination from './custom_pagination';
-import { USE_ACCESS_CONTROL, CUSTOM_CRUISE_NAME, CUSTOM_LOWERING_NAME } from '../client_config';
-import * as mapDispatchToProps from '../actions';
+import React, { Component } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { connect } from 'react-redux'
+import { Button, Col, Card, Form, FormControl, Row, Table, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import PropTypes from 'prop-types'
+import UserForm from './user_form'
+import DisplayUserTokenModal from './display_user_token_modal'
+import ImportFromFileModal from './import_from_file_modal'
+import DeleteModal from './delete_modal'
+import UserPermissionsModal from './user_permissions_modal'
+import CustomPagination from './custom_pagination'
+import { USE_ACCESS_CONTROL } from '../client_settings'
+import { _Cruise_ } from '../vocab'
+import { create_user } from '../api'
+import { generateRandomCharacters } from '../utils'
+import { resetURL } from '../actions/index'
+import * as mapDispatchToProps from '../actions'
 
-const disabledAccounts = ['admin', 'guest', 'pi'];
+const disabledAccounts = ['admin', 'guest', 'pi']
 
-let fileDownload = require('js-file-download');
+let fileDownload = require('js-file-download')
 
-const maxSystemUsersPerPage = 4;
-const maxUsersPerPage = 6;
+const maxSystemUsersPerPage = 4
+const maxUsersPerPage = 6
 
-const tableHeaderStyle = { width: (USE_ACCESS_CONTROL) ? "110px" : "90px" };
+const tableHeaderStyle = { width: USE_ACCESS_CONTROL ? '110px' : '90px' }
 
 class Users extends Component {
-
-  constructor (props) {
-    super(props);
+  constructor(props) {
+    super(props)
 
     this.state = {
       activePage: 1,
       activeSystemPage: 1,
       filteredUsers: null,
-      filteredSystemUsers: null,
-      cruise_name: (CUSTOM_CRUISE_NAME)? CUSTOM_CRUISE_NAME[0].charAt(0).toUpperCase() + CUSTOM_CRUISE_NAME[0].slice(1) : "Cruise",
-      lowering_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : "Lowering"
-    };
+      filteredSystemUsers: null
+    }
 
-    this.handlePageSelect = this.handlePageSelect.bind(this);
-    this.handleSystemPageSelect = this.handleSystemPageSelect.bind(this);
-    this.handleUserImportClose = this.handleUserImportClose.bind(this);
-    this.handleSearchChange = this.handleSearchChange.bind(this);
-    this.handleSystemSearchChange = this.handleSystemSearchChange.bind(this);
+    this.userSearch = React.createRef()
+    this.systemUserSearch = React.createRef()
 
+    this.handlePageSelect = this.handlePageSelect.bind(this)
+    this.handleUserImportClose = this.handleUserImportClose.bind(this)
+    this.filterUsers = this.filterUsers.bind(this)
   }
 
   componentDidMount() {
-    this.props.fetchUsers();
+    this.props.fetchUsers()
   }
 
-  handlePageSelect(eventKey) {
-    this.setState({activePage: eventKey});
+  componentDidUpdate(prevProps) {
+    if (prevProps.users !== this.props.users && this.systemUserSearch.current) {
+      this.filterUsers(this.systemUserSearch.current.value, true)
+      this.filterUsers(this.userSearch.current.value, false)
+    }
   }
 
-  handleSystemPageSelect(eventKey) {
-    this.setState({activeSystemPage: eventKey});
+  handlePageSelect(eventKey, system = false) {
+    this.setState(system ? { activeSystemPage: eventKey } : { activePage: eventKey })
   }
 
-  handleUserDeleteModal(id) {
-    this.props.showModal('deleteUser', { id: id, handleDelete: this.props.deleteUser });
+  handleUserDelete(id) {
+    this.props.showModal('deleteModal', {
+      id: id,
+      handleDelete: async (id) => {
+        this.props.deleteUser(id)
+        this.props.fetchUsers()
+      },
+      message: 'this user'
+    })
   }
 
-  handleNonSystemUsersWipe() {
-    this.props.showModal('nonSystemUsersWipe', { handleDelete: this.props.deleteAllNonSystemUsers });
+  handleUserWipe() {
+    this.props.showModal('deleteModal', {
+      handleDelete: this.props.deleteAllNonSystemUsers,
+      message: 'all non-system user records'
+    })
   }
 
   handleDisplayUserToken(id) {
-    this.props.showModal('displayUserToken', { id: id });
+    this.props.showModal('displayUserToken', { id: id })
   }
 
-  handleUserUpdate(id) {
-    this.props.initUser(id);
+  handleUserSelect(id) {
+    this.props.leaveUserForm()
+    this.props.initUser(id)
   }
 
   handleUserCreate() {
-    this.props.leaveUpdateUserForm();
+    this.props.leaveUserForm()
   }
 
   handleUserImportModal() {
-    this.props.showModal('importUsers');
-  }
-
-  handleUserPermissionsModal(user_id) {
-    this.props.showModal('userPermissions', { user_id: user_id});
+    this.props.showModal('importFromFileModal')
   }
 
   handleUserImportClose() {
-    this.props.fetchUsers();
+    this.props.fetchUsers()
   }
 
-  handleSearchChange(event) {
-    let fieldVal = event.target.value;
-    if(fieldVal !== "") {
-      this.setState({filteredUsers: this.props.users.filter((user) => {
-        const regex = RegExp(fieldVal, 'i');
-        if(user.system_user === false && (user.username.match(regex) || user.email.match(regex) || user.fullname.match(regex))) {
-          return user;
+  handleUserPermissionsModal(user_id) {
+    this.props.showModal('userPermissions', { user_id: user_id })
+  }
+
+  filterUsers(fieldVal, system) {
+    if (fieldVal !== '') {
+      const regex = RegExp(fieldVal, 'i')
+      const filteredUsers = this.props.users.filter((user) => {
+        if (user.system_user === system && (user.username.match(regex) || user.fullname.match(regex) || user.email.match(regex))) {
+          return user
         }
-      }),
-      activePage: 1
-      });
+      })
+
+      this.setState(system ? { filteredSystemUsers: filteredUsers, activeSystemPage: 1 } : { filteredUsers, activePage: 1 })
+    } else {
+      this.setState(system ? { filteredSystemUsers: null } : { filteredUsers: null })
     }
-    else {
-      this.setState({filteredUsers: null});
-    }
-    this.handlePageSelect(1);
+    this.handlePageSelect(1, system)
   }
 
-  handleSystemSearchChange(event) {
-    let fieldVal = event.target.value;
-    if(fieldVal !== "") {
-      this.setState({filteredSystemUsers: this.props.users.filter((user) => {
-        const regex = RegExp(fieldVal, 'i');
-        if(user.system_user === true && (user.username.match(regex) || user.email.match(regex) || user.fullname.match(regex))) {
-          return user;
-        }
-      }),
-      activeSystemPage: 1
-      });
+  handleSearchChange(input, system = false) {
+    let fieldVal = input.target.value
+    this.filterUsers(fieldVal, system)
+  }
+
+  exportUsersToJSON(system = false) {
+    let users = system ? this.state.filteredSystemUsers : this.state.filteredUsers
+    if (!users) {
+      users = this.props.users.filter((user) => user.system_user === system)
     }
-    else {
-      this.setState({filteredSystemUsers: null});
+
+    if (users.length) {
+      fileDownload(JSON.stringify(users, null, 2), `sealog_${system ? 'systemU' : 'u'}serExport.json`)
     }
-    this.handlePageSelect(1);
   }
 
-  exportUsersToJSON() {
-    fileDownload(JSON.stringify(this.props.users.filter(user => user.system_user === false), null, 2), 'sealog_userExport.json');
+  async _insertUser({ id, username, fullname, email, password = generateRandomCharacters(12), roles = [], system_user = false }) {
+    let result = {
+      skipped: false,
+      imported: false,
+      error: null
+    }
+
+    // const item = await get_users({}, id)
+
+    // if (item) {
+    //   this.setState((prevState) => ({
+    //     skipped: prevState.skipped + 1,
+    //     pending: prevState.pending - 1
+    //   }))
+    //   return
+    // }
+
+    const response = await create_user({
+      id,
+      username,
+      fullname,
+      email,
+      password,
+      roles,
+      system_user,
+      resetURL
+    })
+
+    if (response.success) {
+      result.imported = true
+      return result
+    }
+
+    if (response.error.response.data.statusCode == 400 && response.error.response.data.message == 'duplicate uesr ID') {
+      result.skipped = true
+      return result
+    }
+
+    result.error = { ...response.error.response.data, id: id || 'unknown' }
+    return result
   }
-
-  exportSystemUsersToJSON() {
-    fileDownload(JSON.stringify(this.props.users.filter(user => user.system_user === true), null, 2), 'sealog_systemUserExport.json');
-  }
-
-
   renderAddUserButton() {
     if (!this.props.showform) {
       return (
-        <Button variant="primary" size="sm" onClick={ () => this.handleUserCreate() } disabled={!this.props.userid} >Add User</Button>
-      );
+        <Button variant='outline-primary' size='sm' onClick={() => this.handleUserCreate()} disabled={!this.props.userid}>
+          Create User
+        </Button>
+      )
     }
   }
 
   renderImportUsersButton() {
-    if(this.props.roles.includes("admin")) {
+    if (this.props.roles.includes('admin')) {
       return (
-        <Button className="mr-1" variant="primary" size="sm" onClick={ () => this.handleUserImportModal()}>Import From File</Button>
-      );
+        <Button className='me-1' variant='outline-primary' size='sm' onClick={() => this.handleUserImportModal()}>
+          Import
+        </Button>
+      )
     }
   }
 
-  renderUsers() {
+  renderUsers(system = false) {
+    const editTooltip = <Tooltip id='editTooltip'>Edit this user.</Tooltip>
+    const tokenTooltip = <Tooltip id='tokenTooltip'>Show user&apos;s JWT token.</Tooltip>
+    const deleteTooltip = <Tooltip id='deleteTooltip'>Delete this user.</Tooltip>
+    const permissionTooltip = <Tooltip id='permissionTooltip'>{_Cruise_} permissions.</Tooltip>
 
-    const editTooltip = (<Tooltip id="editTooltip">Edit this user.</Tooltip>);
-    const tokenTooltip = (<Tooltip id="tokenTooltip">Show user&apos;s JWT token.</Tooltip>);
-    const deleteTooltip = (<Tooltip id="deleteTooltip">Delete this user.</Tooltip>);
-    const permissionTooltip = (<Tooltip id="permissionTooltip">${this.state.cruise_name}/{this.state.lowering_name} permissions.</Tooltip>);
+    let usersPerPage = system ? maxSystemUsersPerPage : maxUsersPerPage
+    let activePage = system ? this.state.activeSystemPage : this.state.activePage
+    let users = system ? this.state.filteredSystemUsers : this.state.filteredUsers
+    let edit_roles = system ? ['admin'] : ['admin', 'cruise_manager']
 
-    let users = (Array.isArray(this.state.filteredUsers)) ? this.state.filteredUsers : this.props.users.filter(user => user.system_user === false);
-    users = users.slice((this.state.activePage - 1) * maxUsersPerPage, this.state.activePage * maxUsersPerPage);
+    let userList = Array.isArray(users) ? users : this.props.users.filter((user) => user.system_user === system)
 
-    return users.map((user) => {
-      const style = (user.disabled)? {"textDecoration": "line-through"}: {};
-      const className = (this.props.userid === user.id)? "text-warning" : "";
+    userList = userList.slice((activePage - 1) * usersPerPage, activePage * usersPerPage)
+
+    if (!userList.length) {
+      return (
+        <tr key={system ? 'noSystemUsersFound' : 'noUsersFound'}>
+          <td colSpan='3'> No users found!</td>
+        </tr>
+      )
+    }
+
+    return userList.map((user) => {
+      const edit_icon = this.props.roles.some((item) => edit_roles.includes(item)) ? (
+        <OverlayTrigger placement='top' overlay={editTooltip}>
+          <FontAwesomeIcon
+            className='text-warning'
+            onClick={() => this.handleUserSelect(user.id)}
+            icon='pencil-alt'
+            fixedWidth
+            role='button'
+          />
+        </OverlayTrigger>
+      ) : null
+
+      const jwt_icon = this.props.roles.includes('admin') ? (
+        <OverlayTrigger placement='top' overlay={tokenTooltip}>
+          <FontAwesomeIcon
+            className='text-success'
+            onClick={() => this.handleDisplayUserToken(user.id)}
+            icon='eye'
+            fixedWidth
+            role='button'
+          />
+        </OverlayTrigger>
+      ) : null
+
+      const delete_icon =
+        user.id !== this.props.profileid && !disabledAccounts.includes(user.username) ? (
+          <OverlayTrigger placement='top' overlay={deleteTooltip}>
+            <FontAwesomeIcon className='text-danger' onClick={() => this.handleUserDelete(user.id)} icon='trash' fixedWidth role='button' />
+          </OverlayTrigger>
+        ) : null
+
+      const permission_icon =
+        USE_ACCESS_CONTROL && this.props.roles.includes('admin') ? (
+          <OverlayTrigger placement='top' overlay={permissionTooltip}>
+            <FontAwesomeIcon
+              className='text-primary'
+              onClick={() => this.handleUserPermissionsModal(user.id)}
+              icon='user-lock'
+              fixedWidth
+              role='button'
+            />
+          </OverlayTrigger>
+        ) : null
+
+      const style = user.disabled ? { textDecoration: 'line-through' } : {}
+      const className = this.props.userid === user.id ? 'text-warning' : ''
+
       return (
         <tr key={user.id}>
-          <td style={style} className={className}>{user.username}</td>
-          <td style={style} className={className}>{user.fullname}</td>
-          <td>
-            <OverlayTrigger placement="top" overlay={editTooltip}><FontAwesomeIcon className="text-primary" onClick={ () => this.handleUserUpdate(user.id) } icon='pencil-alt' fixedWidth/></OverlayTrigger>{' '}
-            {(USE_ACCESS_CONTROL && this.props.roles.includes('admin')) ? <OverlayTrigger placement="top" overlay={permissionTooltip}><FontAwesomeIcon  className="text-primary" onClick={ () => this.handleUserPermissionsModal(user.id) } icon='user-lock' fixedWidth/></OverlayTrigger> : ''}{' '}
-            {(this.props.roles.includes('admin'))? <OverlayTrigger placement="top" overlay={tokenTooltip}><FontAwesomeIcon className="text-warning" onClick={ () => this.handleDisplayUserToken(user.id) } icon='eye' fixedWidth/></OverlayTrigger> : ''}{' '}
-            {(user.id !== this.props.profileid && !disabledAccounts.includes(user.username))? <OverlayTrigger placement="top" overlay={deleteTooltip}><FontAwesomeIcon  className="text-danger" onClick={ () => this.handleUserDeleteModal(user.id) } icon='trash' fixedWidth/></OverlayTrigger> : ''}
+          <td style={style} className={className}>
+            {user.username}
+          </td>
+          <td style={style} className={className}>
+            {user.fullname}
+          </td>
+          <td className='text-center'>
+            {edit_icon} {jwt_icon} {delete_icon} {permission_icon}
           </td>
         </tr>
-      );
-    });      
+      )
+    })
   }
 
-  renderSystemUsers() {
-
-    const editTooltip = (<Tooltip id="editTooltip">Edit this user.</Tooltip>);
-    const tokenTooltip = (<Tooltip id="tokenTooltip">Show user&apos;s JWT token.</Tooltip>);
-    const deleteTooltip = (<Tooltip id="deleteTooltip">Delete this user.</Tooltip>);
-    const permissionTooltip = (<Tooltip id="permissionTooltip">${this.state.cruise_name}/{this.state.lowering_name} permissions.</Tooltip>);
-
-    let system_users = (Array.isArray(this.state.filteredSystemUsers)) ? this.state.filteredSystemUsers : this.props.users.filter(user => user.system_user === true);
-    system_users = system_users.slice((this.state.activeSystemPage - 1) * maxSystemUsersPerPage, this.state.activeSystemPage * maxSystemUsersPerPage);
-
-    return system_users.map((user) => {
-
-      const style = (user.disabled)? {"textDecoration": "line-through"}: {};
-      if(user.system_user) {
-        return (
-          <tr key={user.id}>
-            <td style={style} className={(this.props.userid === user.id)? "text-warning" : ""}>{user.username}</td>
-            <td style={style} >{user.fullname}</td>
-            <td>
-              {(this.props.roles.includes('admin'))? <OverlayTrigger placement="top" overlay={editTooltip}><FontAwesomeIcon className="text-primary" onClick={ () => this.handleUserUpdate(user.id) } icon='pencil-alt' fixedWidth/></OverlayTrigger> : ''}{' '}
-              {(USE_ACCESS_CONTROL && this.props.roles.includes('admin')) ? <OverlayTrigger placement="top" overlay={permissionTooltip}><FontAwesomeIcon  className="text-primary" onClick={ () => this.handleUserPermissionsModal(user.id) } icon='user-lock' fixedWidth/></OverlayTrigger> : ''}{' '}
-              {(this.props.roles.includes('admin'))? <OverlayTrigger placement="top" overlay={tokenTooltip}><FontAwesomeIcon className="text-warning" onClick={ () => this.handleDisplayUserToken(user.id) } icon='eye' fixedWidth/></OverlayTrigger> : ''}{' '}
-              {(user.id !== this.props.profileid && !disabledAccounts.includes(user.username))? <OverlayTrigger placement="top" overlay={deleteTooltip}><FontAwesomeIcon className="text-danger" onClick={ () => this.handleUserDeleteModal(user.id) } icon='trash' fixedWidth/></OverlayTrigger> : ''}
-            </td>
+  renderUserTable(system = false) {
+    return (
+      <Table className='mb-0' bordered striped size='sm'>
+        <thead>
+          <tr>
+            <th>User Name</th>
+            <th>Full Name</th>
+            <th className='text-center' style={tableHeaderStyle}>
+              Actions
+            </th>
           </tr>
-        );
-      }
-    });
+        </thead>
+        <tbody>{this.renderUsers(system)}</tbody>
+      </Table>
+    )
   }
 
-  renderUserTable() {
-    if(this.props.users.filter(user => user.system_user === false).length > 0){
-      return (
-        <Table responsive bordered striped size="sm">
-          <thead>
-            <tr>
-              <th>User Name</th>
-              <th>Full Name</th>
-              <th style={ tableHeaderStyle }>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.renderUsers()}
-          </tbody>
-        </Table>
-      );
-    } else {
-      return (
-        <Card.Body>No Users Found!</Card.Body>
-      );
-    }
-  }
+  renderUsersHeader(system = false) {
+    const exportTooltip = <Tooltip id='exportTooltip'>Export {system ? 'System ' : ''}Users</Tooltip>
+    const deleteAllNonSystemTooltip = !system ? <Tooltip id='deleteAllNonSystemTooltip'>Delete all non-system Users</Tooltip> : null
 
-  renderSystemUserTable() {
-    if (this.props.users.filter(user => user.system_user === true).length > 0){
-      return (
-        <Table responsive bordered striped size="sm">
-          <thead>
-            <tr>
-              <th>User Name</th>
-              <th>Full Name</th>
-              <th style={ tableHeaderStyle }>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.renderSystemUsers()}
-          </tbody>
-        </Table>
-      );
-    } else {
-      return (
-        <Card.Body>No System Users Found!</Card.Body>
-      );
-    }
-  }
-
-  renderUsersHeader() {
-
-    const Label = "Users";
-
-    const exportTooltip = (<Tooltip id="exportTooltip">Export Users</Tooltip>);
-    const deleteAllNonSystemTooltip = (<Tooltip id="deleteAllNonSystemTooltip">Delete all non-system Users</Tooltip>);
-
-    const disableBtn = (this.props.users.filter(user => user.system_user === false).length > 0)? false : true;
+    const disableBtn = this.props.users.filter((user) => user.system_user === system).length > 0 ? false : true
 
     return (
       <div>
-        { Label }
-        <div className="float-right">
-          <Form inline>
-            <FormControl size="sm" type="text" placeholder="Search" className="mr-sm-2" onChange={this.handleSearchChange}/>
-            <OverlayTrigger placement="top" overlay={deleteAllNonSystemTooltip}><FontAwesomeIcon onClick={ () => this.handleNonSystemUsersWipe() } disabled={disableBtn} icon='trash' fixedWidth/></OverlayTrigger>{' '}
-            <OverlayTrigger placement="top" overlay={exportTooltip}><FontAwesomeIcon onClick={ () => this.exportUsersToJSON() } disabled={disableBtn} icon='download' fixedWidth/></OverlayTrigger>
-          </Form>
-        </div>
+        {system ? 'System ' : ''} Users
+        <OverlayTrigger placement='top' overlay={exportTooltip}>
+          <FontAwesomeIcon
+            className='float-end ms-2 pt-2 text-primary'
+            onClick={() => this.exportUsersToJSON(system)}
+            disabled={disableBtn}
+            icon='download'
+            fixedWidth
+            role='button'
+          />
+        </OverlayTrigger>
+        {!system ? (
+          <OverlayTrigger placement='top' overlay={deleteAllNonSystemTooltip}>
+            <FontAwesomeIcon
+              className='float-end pt-2 text-danger'
+              onClick={() => this.handleUserWipe(system)}
+              disabled={disableBtn}
+              icon='trash'
+              fixedWidth
+              role='button'
+            />
+          </OverlayTrigger>
+        ) : null}
+        <Form className='float-end me-2'>
+          <FormControl
+            ref={system ? this.systemUserSearch : this.userSearch}
+            size='sm'
+            type='text'
+            placeholder='Search'
+            className='me-sm-2'
+            onChange={(input) => this.handleSearchChange(input, system)}
+          />
+        </Form>
       </div>
-    );
-  }
-
-  renderSystemUsersHeader() {
-
-    const Label = "System Users";
-
-    const exportTooltip = (<Tooltip id="exportTooltip">Export System Users</Tooltip>);
-
-    let export_icon = (this.props.roles.includes("admin"))? (<OverlayTrigger placement="top" overlay={exportTooltip}><FontAwesomeIcon onClick={ () => this.exportSystemUsersToJSON() } icon='download' fixedWidth/></OverlayTrigger>) : null;
-
-    return (
-      <div>
-        { Label }
-        <div className="float-right">
-          <Form inline>
-            <FormControl size="sm" type="text" placeholder="Search" className="mr-sm-2" onChange={this.handleSystemSearchChange}/>
-            {export_icon}
-          </Form>
-        </div>
-      </div>
-    );
+    )
   }
 
   render() {
     if (!this.props.roles) {
-      return (
-        <div>Loading...</div>
-      );
+      return <div>Loading...</div>
     }
 
-    if (this.props.roles.includes("admin") || this.props.roles.includes("cruise_manager")) {
+    const filteredSystemUsers = this.state.filteredSystemUsers
+      ? this.state.filteredSystemUsers.length
+      : this.props.users.filter((user) => user.system_user === true).length
 
-      const  userForm = (this.props.userid) ? <UpdateUser /> : <CreateUser />;
+    const filteredUsers = this.state.filteredUsers
+      ? this.state.filteredUsers.length
+      : this.props.users.filter((user) => user.system_user === false).length
 
+    if (this.props.roles.some((item) => ['admin', 'cruise_manager'].includes(item))) {
       return (
-        <div>
+        <React.Fragment>
+          <DeleteModal />
           <DisplayUserTokenModal />
-          <DeleteUserModal />
-          <ImportUsersModal handleExit={this.handleUserImportClose}/>
-          <NonSystemUsersWipeModal />
-          <UserPermissionsModal />
-          <Row>
-            <Col className="px-1" sm={12} md={7} lg={{span:6, offset:1}} xl={{span:5, offset:2}}>
-              <Card className="border-secondary" key="system_users_card">
-                <Card.Header>{this.renderSystemUsersHeader()}</Card.Header>
-                {this.renderSystemUserTable()}
-                <CustomPagination className="mt-2" page={this.state.activeSystemPage} count={(this.state.filteredSystemUsers)? this.state.filteredSystemUsers.length : this.props.users.filter(user => user.system_user === true).length} pageSelectFunc={this.handleSystemPageSelect} maxPerPage={maxSystemUsersPerPage}/>
-              </Card>
-              <Card className="border-secondary mt-2" >
+          <ImportFromFileModal handleExit={this.handleUserImportClose} title='Import Users' insertItem={this._insertUser} />
+          <UserPermissionsModal onClose={this.props.fetchCruises} />
+          <Row className='py-2 px-1 d-flex justify-content-center'>
+            <Col className='px-1' sm={8} md={6} lg={5} xl={5}>
+              {this.props.roles.includes('admin') ? (
+                <Card className='border-secondary'>
+                  <Card.Header>{this.renderUsersHeader(true)}</Card.Header>
+                  {this.renderUserTable(true)}
+                  <CustomPagination
+                    className='mt-2'
+                    page={this.state.activeSystemPage}
+                    count={filteredSystemUsers}
+                    pageSelectFunc={(eventKey) => this.handlePageSelect(eventKey, true)}
+                    maxPerPage={maxSystemUsersPerPage}
+                  />
+                </Card>
+              ) : null}
+              <Card className='border-secondary mt-2'>
                 <Card.Header>{this.renderUsersHeader()}</Card.Header>
                 {this.renderUserTable()}
-                <CustomPagination className="mt-2" page={this.state.activePage} count={(this.state.filteredUsers)? this.state.filteredUsers.length : this.props.users.filter(user => user.system_user === false).length} pageSelectFunc={this.handlePageSelect} maxPerPage={maxUsersPerPage}/>
+                <CustomPagination
+                  className='mt-2'
+                  page={this.state.activePage}
+                  count={filteredUsers}
+                  pageSelectFunc={this.handlePageSelect}
+                  maxPerPage={maxUsersPerPage}
+                />
               </Card>
-              <div className="float-right mt-2">
+              <div className='float-end mt-2'>
                 {this.renderImportUsersButton()}
                 {this.renderAddUserButton()}
               </div>
             </Col>
-            <Col className="px-1" sm={12} md={5} lg={4} xl={3}>
-              { userForm }
+            <Col className='px-1' sm={10} md={4} lg={5} xl={5}>
+              <UserForm handleFormSubmit={this.props.fetchUsers} />
             </Col>
           </Row>
-        </div>
-      );
+        </React.Fragment>
+      )
     } else {
-      return (
-        <div>
-          What are YOU doing here?
-        </div>
-      );
+      return <div>What are YOU doing here?</div>
     }
   }
 }
 
-function mapStateToProps(state) {
+Users.propTypes = {
+  deleteAllNonSystemUsers: PropTypes.func.isRequired,
+  deleteUser: PropTypes.func.isRequired,
+  fetchCruises: PropTypes.func.isRequired,
+  fetchUsers: PropTypes.func.isRequired,
+  initUser: PropTypes.func.isRequired,
+  leaveUserForm: PropTypes.func.isRequired,
+  profileid: PropTypes.string,
+  roles: PropTypes.array,
+  showform: PropTypes.bool,
+  showModal: PropTypes.func.isRequired,
+  userid: PropTypes.string,
+  users: PropTypes.array.isRequired
+}
+
+const mapStateToProps = (state) => {
   return {
     users: state.user.users,
     userid: state.user.user.id,
     profileid: state.user.profile.id,
     roles: state.user.profile.roles
-  };
+  }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Users);
+export default connect(mapStateToProps, mapDispatchToProps)(Users)

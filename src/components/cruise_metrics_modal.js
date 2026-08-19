@@ -1,23 +1,23 @@
-import React, { Component } from 'react';
-import axios from 'axios';
-import moment from 'moment';
-import Cookies from 'universal-cookie';
-import PropTypes from 'prop-types';
-import { Button, Table, Modal } from 'react-bootstrap';
-import { connectModal } from 'redux-modal';
-import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_config';
+import React, { Component } from 'react'
+import axios from 'axios'
+import moment from 'moment'
+import Cookies from 'universal-cookie'
+import PropTypes from 'prop-types'
+import { Button, Table, Modal } from 'react-bootstrap'
+import { connectModal } from 'redux-modal'
+import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_settings'
 
-let fileDownload = require('js-file-download');
+let fileDownload = require('js-file-download')
 
-const cookies = new Cookies();
-const DECK_START_MILESTONES = ['In water'];
-const DECK_STOP_MILESTONES = ['Out of water'];
-const DEPLOYMENT_START_MILESTONES = ['Deployment'];
-const DEPLOYMENT_STOP_MILESTONES = ['Descent Initiated', 'Initial Descent', 'lowering_descending'];
-const SURVEY_DEPTH_START_MILESTONES = ['Reached Survey Depth', 'At Depth', 'lowering_on_bottom'];
-const SURVEY_DEPTH_STOP_MILESTONES = ['Leaving Survey Depth', 'lowering_off_bottom'];
-const SURFACE_MILESTONES = ['Vehicle on Surface', 'lowering_on_surface'];
-const RECOVERY_STOP_MILESTONES = ['Mission Key Inserted'];
+const cookies = new Cookies()
+const DECK_START_MILESTONES = ['In water']
+const DECK_STOP_MILESTONES = ['Out of water']
+const DEPLOYMENT_START_MILESTONES = ['Deployment']
+const DEPLOYMENT_STOP_MILESTONES = ['Descent Initiated', 'Initial Descent', 'lowering_descending']
+const SURVEY_DEPTH_START_MILESTONES = ['Reached Survey Depth', 'At Depth', 'lowering_on_bottom']
+const SURVEY_DEPTH_STOP_MILESTONES = ['Leaving Survey Depth', 'lowering_off_bottom']
+const SURFACE_MILESTONES = ['Vehicle on Surface', 'lowering_on_surface']
+const RECOVERY_STOP_MILESTONES = ['Mission Key Inserted']
 const STAGE_DEFINITIONS = [
   { label: 'Deck to Deck', start: DECK_START_MILESTONES, startFallback: 'start_ts', stop: DECK_STOP_MILESTONES, stopFallback: 'stop_ts' },
   { label: 'Deployment', start: DEPLOYMENT_START_MILESTONES, stop: DEPLOYMENT_STOP_MILESTONES },
@@ -25,100 +25,89 @@ const STAGE_DEFINITIONS = [
   { label: 'Survey Depth', start: SURVEY_DEPTH_START_MILESTONES, stop: SURVEY_DEPTH_STOP_MILESTONES },
   { label: 'Ascent', start: SURVEY_DEPTH_STOP_MILESTONES, stop: SURFACE_MILESTONES },
   { label: 'Recovery', start: SURFACE_MILESTONES, stop: RECOVERY_STOP_MILESTONES }
-];
+]
 
 class CruiseMetricsModal extends Component {
-
-  constructor (props) {
-    super(props);
+  constructor(props) {
+    super(props)
 
     this.state = {
       lowerings: null,
       lowering_stats: null,
       lowering_stat_totals: null,
       status_msg: '',
-      lowering_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : "Lowering",
-      lowerings_name: (CUSTOM_LOWERING_NAME)? CUSTOM_LOWERING_NAME[1].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[1].slice(1) : "Lowerings"
+      lowering_name: CUSTOM_LOWERING_NAME ? CUSTOM_LOWERING_NAME[0].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[0].slice(1) : 'Lowering',
+      lowerings_name: CUSTOM_LOWERING_NAME
+        ? CUSTOM_LOWERING_NAME[1].charAt(0).toUpperCase() + CUSTOM_LOWERING_NAME[1].slice(1)
+        : 'Lowerings'
     }
 
-    this.handleClose = this.handleClose.bind(this);
-    this.buildStatsAndTotals = this.buildStatsAndTotals.bind(this);
-    this.exportDataToFile = this.exportDataToFile.bind(this);
+    this.handleClose = this.handleClose.bind(this)
+    this.buildStatsAndTotals = this.buildStatsAndTotals.bind(this)
+    this.exportDataToFile = this.exportDataToFile.bind(this)
   }
 
-  static propTypes = {
-    cruise: PropTypes.object
-  };
-
   componentDidMount() {
-    this.fetchLowerings();
+    this.fetchLowerings()
   }
 
   componentDidUpdate(prevProps, prevState) {
-
-    if(this.props.cruise && this.props.cruise !== prevProps.cruise) {
+    if (this.props.cruise && this.props.cruise !== prevProps.cruise) {
       // console.log("cruise changed");
-      this.fetchLowerings();
+      this.fetchLowerings()
     }
 
-    if(this.state.lowerings && this.state.lowerings != prevState.lowerings) {
+    if (this.state.lowerings && this.state.lowerings != prevState.lowerings) {
       // console.log("lowerings changed");
-      this.buildStatsAndTotals();
+      this.buildStatsAndTotals()
     }
-
   }
 
-
   async fetchLowerings() {
+    this.setState({ status_msg: `Downloading ${this.state.lowering_name.toLowerCase()} data...` })
 
-    this.setState({status_msg: `Downloading ${this.state.lowering_name.toLowerCase()} data...`})
-
-    const lowerings = await axios.get(`${API_ROOT_URL}/api/v1/lowerings/bycruise/${this.props.cruise.id}`,
-      {
+    const lowerings = await axios
+      .get(`${API_ROOT_URL}/api/v1/lowerings/bycruise/${this.props.cruise.id}`, {
         headers: {
-        authorization: cookies.get('token')
+          authorization: cookies.get('token')
         }
-      }      
-    ).then((response) => {
+      })
+      .then((response) => {
+        return response.data
+      })
+      .catch((error) => {
+        if (error.response.status !== 404) {
+          console.error(error)
+        }
 
-      return response.data
+        return []
+      })
 
-    }).catch((error) => {
-      if(error.response.status !== 404) {
-        console.log(error)
-      }
+    lowerings.reverse()
 
-      return []
-    })
-  
-    lowerings.reverse();
-
-    this.setState({lowerings, status_msg: ""})
-
+    this.setState({ lowerings, status_msg: '' })
   }
 
   getMilestoneDate(lowering, milestoneNames) {
-    const milestones = lowering.lowering_additional_meta && lowering.lowering_additional_meta.milestones ? lowering.lowering_additional_meta.milestones : {};
-    const milestoneName = milestoneNames.find((name) => milestones[name]);
+    const milestones =
+      lowering.lowering_additional_meta && lowering.lowering_additional_meta.milestones ? lowering.lowering_additional_meta.milestones : {}
+    const milestoneName = milestoneNames.find((name) => milestones[name])
 
-    if(!milestoneName) {
-      return null;
+    if (!milestoneName) {
+      return null
     }
 
     try {
-      return moment.utc(milestones[milestoneName]);
-    }
-    catch(err) {
-      console.error(err);
+      return moment.utc(milestones[milestoneName])
+    } catch (err) {
+      console.error(err)
     }
 
-    return null;
+    return null
   }
 
   buildStatsAndTotals() {
-
     const lowering_stats = this.state.lowerings.map((lowering, index) => {
-
       const stats = {
         start_dt: null,
         deployment_dt: null,
@@ -137,54 +126,48 @@ class CruiseMetricsModal extends Component {
         recovery_duration: null
       }
 
-      const milestoneStart = this.getMilestoneDate(lowering, DECK_START_MILESTONES);
-      const milestoneStop = this.getMilestoneDate(lowering, DECK_STOP_MILESTONES);
-      stats.deployment_dt = this.getMilestoneDate(lowering, DEPLOYMENT_START_MILESTONES);
-      stats.descending_dt = this.getMilestoneDate(lowering, DEPLOYMENT_STOP_MILESTONES);
-      stats.on_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_START_MILESTONES);
-      stats.off_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_STOP_MILESTONES);
-      stats.on_surface_dt = this.getMilestoneDate(lowering, SURFACE_MILESTONES);
-      stats.mission_key_inserted_dt = this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES);
+      const milestoneStart = this.getMilestoneDate(lowering, DECK_START_MILESTONES)
+      const milestoneStop = this.getMilestoneDate(lowering, DECK_STOP_MILESTONES)
+      stats.deployment_dt = this.getMilestoneDate(lowering, DEPLOYMENT_START_MILESTONES)
+      stats.descending_dt = this.getMilestoneDate(lowering, DEPLOYMENT_STOP_MILESTONES)
+      stats.on_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_START_MILESTONES)
+      stats.off_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_STOP_MILESTONES)
+      stats.on_surface_dt = this.getMilestoneDate(lowering, SURFACE_MILESTONES)
+      stats.mission_key_inserted_dt = this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES)
 
       if (milestoneStart) {
-        stats.start_dt = milestoneStart;
-      }
-      else if (lowering.start_ts) {
+        stats.start_dt = milestoneStart
+      } else if (lowering.start_ts) {
         try {
-          stats.start_dt = moment.utc(lowering.start_ts);
-        }
-        catch(err) {
-          console.error(err);
+          stats.start_dt = moment.utc(lowering.start_ts)
+        } catch (err) {
+          console.error(err)
         }
       }
 
       if (milestoneStop) {
-        stats.stop_dt = milestoneStop;
-      }
-      else if (lowering.stop_ts) {
+        stats.stop_dt = milestoneStop
+      } else if (lowering.stop_ts) {
         try {
-          stats.stop_dt = moment.utc(lowering.stop_ts);
-        }
-        catch(err) {
-          console.error(err);
+          stats.stop_dt = moment.utc(lowering.stop_ts)
+        } catch (err) {
+          console.error(err)
         }
       }
 
-      if (lowering.lowering_additional_meta.stats && lowering.lowering_additional_meta.stats.max_depth) { 
+      if (lowering.lowering_additional_meta.stats && lowering.lowering_additional_meta.stats.max_depth) {
         try {
-          stats.max_depth = parseFloat(lowering.lowering_additional_meta.stats.max_depth);
-        }
-        catch(err) {
-          console.error(err);
+          stats.max_depth = parseFloat(lowering.lowering_additional_meta.stats.max_depth)
+        } catch (err) {
+          console.error(err)
         }
       }
 
-      if (lowering.lowering_additional_meta.stats && lowering.lowering_additional_meta.stats.bounding_box) { 
+      if (lowering.lowering_additional_meta.stats && lowering.lowering_additional_meta.stats.bounding_box) {
         try {
           stats.bounding_box = lowering.lowering_additional_meta.stats.bounding_box.map((coord) => parseFloat(coord))
-        }
-        catch(err) {
-          console.error(err);
+        } catch (err) {
+          console.error(err)
         }
       }
 
@@ -219,15 +202,13 @@ class CruiseMetricsModal extends Component {
       }
 
       return stats
-
     })
 
-    this.setState({lowering_stats})
+    this.setState({ lowering_stats })
   }
 
   exportDataToFile() {
-
-    var Results = [];
+    var Results = []
 
     Results.push([
       `${this.state.lowering_name} ID`,
@@ -244,7 +225,7 @@ class CruiseMetricsModal extends Component {
     this.state.lowering_stats.forEach((stat, index) => {
       Results.push([
         this.state.lowerings[index].lowering_id,
-        "\"" + this.state.lowerings[index].lowering_location + "\"",
+        '"' + this.state.lowerings[index].lowering_location + '"',
         moment.duration(stat.total_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.deployment_duration).format('HH:mm:ss', { trim: false }),
         moment.duration(stat.descent_duration).format('HH:mm:ss', { trim: false }),
@@ -255,29 +236,32 @@ class CruiseMetricsModal extends Component {
       ])
     })
 
-    const lowering_stat_totals = this.state.lowering_stats.reduce((totals,lowering) => {
-      totals.total_duration += lowering.total_duration;
-      totals.deployment_duration += lowering.deployment_duration;
-      totals.descent_duration += lowering.descent_duration;
-      totals.on_bottom_duration += lowering.on_bottom_duration;
-      totals.ascent_duration += lowering.ascent_duration;
-      totals.recovery_duration += lowering.recovery_duration;
-      totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
+    const lowering_stat_totals = this.state.lowering_stats.reduce(
+      (totals, lowering) => {
+        totals.total_duration += lowering.total_duration
+        totals.deployment_duration += lowering.deployment_duration
+        totals.descent_duration += lowering.descent_duration
+        totals.on_bottom_duration += lowering.on_bottom_duration
+        totals.ascent_duration += lowering.ascent_duration
+        totals.recovery_duration += lowering.recovery_duration
+        totals.max_depth = totals.max_depth >= lowering.max_depth ? totals.max_depth : lowering.max_depth
 
-      return totals
-    },{
-      total_duration: 0,
-      deployment_duration: 0,
-      descent_duration: 0,
-      on_bottom_duration: 0,
-      ascent_duration: 0,
-      recovery_duration: 0,
-      max_depth: 0
-    });
+        return totals
+      },
+      {
+        total_duration: 0,
+        deployment_duration: 0,
+        descent_duration: 0,
+        on_bottom_duration: 0,
+        ascent_duration: 0,
+        recovery_duration: 0,
+        max_depth: 0
+      }
+    )
 
     Results.push([
       `${this.state.lowerings.length} ${this.state.lowerings_name}`,
-      "Totals:",
+      'Totals:',
       moment.duration(lowering_stat_totals.total_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.deployment_duration).format('HH:mm:ss', { trim: false }),
       moment.duration(lowering_stat_totals.descent_duration).format('HH:mm:ss', { trim: false }),
@@ -287,25 +271,22 @@ class CruiseMetricsModal extends Component {
       lowering_stat_totals.max_depth
     ])
 
-    let CsvString = "";
-    
-    Results.forEach(function(RowItem) {
-        
-      CsvString += RowItem.join(',') + "\r\n";
-    
-    });
-    
-    fileDownload(CsvString, `${this.props.cruise.cruise_id}_cruise_data_summary.csv`);
+    let CsvString = ''
+
+    Results.forEach(function (RowItem) {
+      CsvString += RowItem.join(',') + '\r\n'
+    })
+
+    fileDownload(CsvString, `${this.props.cruise.cruise_id}_cruise_data_summary.csv`)
   }
 
   handleClose() {
-    this.props.handleHide();
+    this.props.handleHide()
   }
 
   renderStatsTable(stats) {
-
-    if(stats == null) {
-      return null;
+    if (stats == null) {
+      return null
     }
 
     const statTableHeaders = (
@@ -340,26 +321,28 @@ class CruiseMetricsModal extends Component {
       )
     })
 
-    const lowering_stat_totals = stats.reduce((totals,lowering) => {
-      totals.total_duration += lowering.total_duration;
-      totals.deployment_duration += lowering.deployment_duration;
-      totals.descent_duration += lowering.descent_duration;
-      totals.on_bottom_duration += lowering.on_bottom_duration;
-      totals.ascent_duration += lowering.ascent_duration;
-      totals.recovery_duration += lowering.recovery_duration;
-      totals.max_depth = (totals.max_depth >= lowering.max_depth) ? totals.max_depth : lowering.max_depth;
+    const lowering_stat_totals = stats.reduce(
+      (totals, lowering) => {
+        totals.total_duration += lowering.total_duration
+        totals.deployment_duration += lowering.deployment_duration
+        totals.descent_duration += lowering.descent_duration
+        totals.on_bottom_duration += lowering.on_bottom_duration
+        totals.ascent_duration += lowering.ascent_duration
+        totals.recovery_duration += lowering.recovery_duration
+        totals.max_depth = totals.max_depth >= lowering.max_depth ? totals.max_depth : lowering.max_depth
 
-      return totals
-
-    }, {
-      total_duration: 0,
-      deployment_duration: 0,
-      descent_duration: 0,
-      on_bottom_duration: 0,
-      ascent_duration: 0,
-      recovery_duration: 0,
-      max_depth: 0
-    })
+        return totals
+      },
+      {
+        total_duration: 0,
+        deployment_duration: 0,
+        descent_duration: 0,
+        on_bottom_duration: 0,
+        ascent_duration: 0,
+        recovery_duration: 0,
+        max_depth: 0
+      }
+    )
 
     const statTableDataTotals = (
       <tr key='stat_totals'>
@@ -376,7 +359,7 @@ class CruiseMetricsModal extends Component {
     )
 
     return (
-      <Table striped bordered hover responsive size="sm" style={{fontSize: '.8rem'}}>
+      <Table striped bordered hover responsive size='sm' style={{ fontSize: '.8rem' }}>
         {statTableHeaders}
         <tbody>
           {statsTableData}
@@ -387,12 +370,12 @@ class CruiseMetricsModal extends Component {
   }
 
   renderStageBoundary(milestoneNames) {
-    return milestoneNames[0];
+    return milestoneNames[0]
   }
 
   renderStageDefinitions() {
     return (
-      <div className="small text-body mb-2">
+      <div className='small text-body mb-2'>
         <strong>Stage Definitions:</strong>
         {STAGE_DEFINITIONS.map((stage) => {
           return (
@@ -406,30 +389,37 @@ class CruiseMetricsModal extends Component {
   }
 
   render() {
-
     const { show, handleHide, cruise } = this.props
 
-    const statsTable = this.renderStatsTable(this.state.lowering_stats);
+    const statsTable = this.renderStatsTable(this.state.lowering_stats)
 
     if (cruise) {
       return (
-        <Modal size="lg" show={show} onHide={handleHide}>
+        <Modal size='lg' show={show} onHide={handleHide}>
           <Modal.Header closeButton>
-            <Modal.Title as="h5">Cruise Metrics</Modal.Title>
+            <Modal.Title as='h5'>Cruise Metrics</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
-          {statsTable}
-          {this.renderStageDefinitions()}
-          <span className='text-warning'>{this.state.status_msg}</span><span className="float-right"><Button variant="outline-primary" size="sm" onClick={this.exportDataToFile}>Export</Button></span>
+            {statsTable}
+            {this.renderStageDefinitions()}
+            <span className='text-warning'>{this.state.status_msg}</span>
+            <span className='float-right'>
+              <Button variant='outline-primary' size='sm' onClick={this.exportDataToFile}>
+                Export
+              </Button>
+            </span>
           </Modal.Body>
         </Modal>
-      );
-    }
-    else {
-      return null;
+      )
+    } else {
+      return null
     }
   }
+}
+
+CruiseMetricsModal.propTypes = {
+  cruise: PropTypes.object
 }
 
 export default connectModal({ name: 'cruiseMetrics' })(CruiseMetricsModal)

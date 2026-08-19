@@ -1,187 +1,264 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { Alert, Button, Tab, Tabs } from 'react-bootstrap';
-import EventTemplateOptionsModal from './event_template_options_modal';
-import { Client } from '@hapi/nes/lib/client';
-import { WS_ROOT_URL } from '../client_config';
-import { POWER_LOGGER } from '../standard_user_role_options';
-import * as mapDispatchToProps from '../actions';
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { Alert, Button, Tab, Tabs } from 'react-bootstrap'
+import PropTypes from 'prop-types'
+import EventTemplateOptionsModal from './event_template_options_modal'
+import { Client } from '@hapi/nes/lib/client'
+import { connectWSClient } from '../utils'
+import cookies from '../cookies'
+import { WS_ROOT_URL, CATEGORY_SORT_ORDER, DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR } from '../client_settings'
+import { ADMIN, POWER_LOGGER } from '../user_role_options'
+import * as mapDispatchToProps from '../actions'
+
+const sortCategories = (category_list) => {
+  if (CATEGORY_SORT_ORDER == null || CATEGORY_SORT_ORDER.length === 0) {
+    return category_list
+  }
+
+  const order_map = new Map()
+  CATEGORY_SORT_ORDER.forEach((item, index) => order_map.set(item, index))
+
+  return category_list.sort((a, b) => {
+    // Check if the item exists in the orderList
+    const indexA = order_map.has(a) ? order_map.get(a) : Infinity
+    const indexB = order_map.has(b) ? order_map.get(b) : Infinity
+
+    // If both items are in the orderList, sort by their indices
+    if (indexA !== Infinity && indexB !== Infinity) {
+      return indexA - indexB
+    }
+
+    // If only one item is in the orderList, place it before the item not in the list
+    if (indexA === Infinity && indexB !== Infinity) {
+      return 1
+    }
+    if (indexB === Infinity && indexA !== Infinity) {
+      return -1
+    }
+
+    // If neither item is in the orderList, preserve their original order
+    return 0
+  })
+}
 
 class EventTemplateList extends Component {
   constructor(props) {
-    super(props);
+    super(props)
 
-    this.client = new Client(`${WS_ROOT_URL}`);
-    this.connectToWS = this.connectToWS.bind(this);
-    this.renderEventTemplates = this.renderEventTemplates.bind(this);
-    this.handleEventSubmit = this.handleEventSubmit.bind(this);
+    this.state = {
+      active_template_category: cookies.get('category'),
+      fetching: true
+    }
+
+    this.client = new Client(`${WS_ROOT_URL}`)
+    this.connectToWS = this.connectToWS.bind(this)
+    this.fetchEventTemplates = this.fetchEventTemplates.bind(this)
+    this.renderEventTemplates = this.renderEventTemplates.bind(this)
   }
 
   componentDidMount() {
     if (this.props.authenticated) {
-      this.props.fetchEventTemplatesForMain();
-      this.connectToWS();
+      this.fetchEventTemplates()
+      this.connectToWS()
     }
   }
 
   componentWillUnmount() {
-    this.client.disconnect();
+    this.client.disconnect()
   }
 
   async connectToWS() {
-    try {
-      await this.client.connect();
-      // {
-      //   auth: {
-      //     headers: {
-      //       authorization: cookies.get('token')
-      //     }
-      //   }
-      // })
-
-      const updateHandler = () => {
-        this.props.fetchEventTemplatesForMain();
-      };
-
-      const deleteHandler = () => {
-        this.props.fetchEventTemplatesForMain();
-      };
-
-      this.client.subscribe('/ws/status/newEventTemplates', updateHandler);
-      this.client.subscribe('/ws/status/updateEventTemplates', updateHandler);
-      this.client.subscribe('/ws/status/deleteEventTemplates', deleteHandler);
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  }
-
-  isPowerLogger() {
-    return this.props.roles && this.props.roles.includes(POWER_LOGGER);
-  }
-
-  filterTemplates(event_templates) {
-    return event_templates.filter(
-      (template) =>
-        (template.disabled ?? false) === false &&
-        (this.isPowerLogger() || (template.is_power_logger ?? false) === false)
-    );
-  }
-
-  getVisibleCategories(event_templates) {
-    const categories = new Set();
-    event_templates.forEach((template) => {
-      template.template_categories.forEach((category) => categories.add(category));
-    });
-    return Array.from(categories).sort();
-  }
-
-  renderCategoryTabs(visibleCategories, event_templates) {
-    return (
-      <Tabs
-        className="category-tab"
-        variant="pills"
-        activeKey={this.props.event_template_category || (visibleCategories.length > 0 ? visibleCategories[0] : 'all')}
-        id="event-template-tabs"
-        onSelect={(category) => this.props.updateEventTemplateCategory(category)}
-      >
-        {visibleCategories.map((category) => (
-          <Tab eventKey={category} title={category} key={category}>
-            {this.filterTemplates(event_templates)
-              .filter((template) => template.template_categories.includes(category))
-              .map((template) => (
-                <Button
-                  className="mt-1 mr-1 py-3 btn-template"
-                  variant="primary"
-                  to="#"
-                  key={`template_${template.id}`}
-                  onClick={(e) => this.handleEventSubmit(template, e)}
-                >
-                  {template.event_name}
-                </Button>
-              ))}
-          </Tab>
-        ))}
-        <Tab eventKey="all" title="All">
-          {this.filterTemplates(event_templates).map((template) => (
-            <Button
-              className="mt-1 mr-1 py-3 btn-template"
-              variant="primary"
-              to="#"
-              key={`template_${template.id}`}
-              onClick={(e) => this.handleEventSubmit(template, e)}
-            >
-              {template.event_name}
-            </Button>
-          ))}
-        </Tab>
-      </Tabs>
-    );
-  }
-
-  renderEventTemplates() {
-    const { event_templates } = this.props;
-    if (!event_templates || event_templates.length === 0) {
-      return <div>No event template found</div>;
+    const updateHandler = () => {
+      this.props.fetchEventTemplates()
     }
 
-    const filteredTemplates = this.filterTemplates(event_templates);
-    if (filteredTemplates.length === 0) {
-      return <div>No event template found</div>;
-    }
-
-    const visibleCategories = this.getVisibleCategories(filteredTemplates);
-    return this.renderCategoryTabs(visibleCategories, filteredTemplates);
+    await connectWSClient(this.client, {
+      '/ws/status/newEventTemplates': updateHandler,
+      '/ws/status/updateEventTemplates': updateHandler,
+      '/ws/status/deleteEventTemplates': updateHandler
+    })
   }
 
   async handleEventSubmit(event_template, e = null) {
     const needs_modal =
-      (e && e.shiftKey) || event_template.event_options.some((option) => option.event_option_type !== 'static text');
+      (e && e.shiftKey) ||
+      event_template.event_options.reduce((needs, option) => {
+        return option.event_option_type !== 'static text' ? true : needs
+      }, false)
+
     if (event_template.event_free_text_required || needs_modal) {
-      const event = await this.props.createEvent(event_template.event_value, '', []);
+      const event = await this.props.createEvent({
+        event_value: event_template.event_value
+        // publish: false
+      })
       this.props.showModal('eventOptions', {
         eventTemplate: event_template,
         event: event,
         handleUpdateEvent: this.props.updateEvent,
-        handleDeleteEvent: this.props.deleteEvent,
-      });
+        handleDeleteEvent: this.props.deleteEvent
+      })
     } else {
-      const event_options = event_template.event_options.map((option) => ({
-        event_option_name: option.event_option_name,
-        event_option_value: option.event_option_default_value,
-      }));
-      await this.props.createEvent(event_template.event_value, '', event_options);
+      const event_options = event_template.event_options.reduce((eventOptions, option) => {
+        eventOptions.push({
+          event_option_name: option.event_option_name,
+          event_option_value: option.event_option_default_value
+        })
+        return eventOptions
+      }, [])
+
+      await this.props.createEvent({
+        event_value: event_template.event_value,
+        event_free_text: '',
+        event_options
+      })
+    }
+  }
+
+  async fetchEventTemplates() {
+    this.setState({ fetching: true })
+    await this.props.fetchEventTemplates()
+    this.setState({ fetching: false })
+  }
+
+  updateEventTemplateCategory(category) {
+    this.setState({ active_template_category: category })
+    cookies.set('category', category)
+  }
+
+  isPowerLogger() {
+    return this.props.roles && (this.props.roles.includes(ADMIN) || this.props.roles.includes(POWER_LOGGER))
+  }
+
+  isTemplateVisible(event_template) {
+    const notDisabled = typeof event_template.disabled === 'undefined' || !event_template.disabled
+    const accessAllowed = !event_template.admin_only || this.isPowerLogger()
+    return notDisabled && accessAllowed
+  }
+
+  renderEventTemplates() {
+    const template_categories = [
+      ...new Set(
+        this.props.event_templates.reduce((flat, event_template) => {
+          if (this.isTemplateVisible(event_template)) {
+            return flat.concat(event_template.template_categories)
+          }
+          return flat
+        }, [])
+      )
+    ].sort()
+
+    const sorted_categories = sortCategories(template_categories)
+
+    if (this.props.event_templates) {
+      if (sorted_categories.length > 0) {
+        return (
+          <Tabs
+            className='category-tab'
+            variant='pills'
+            transition={false}
+            activeKey={this.state.active_template_category ? this.state.active_template_category : sorted_categories[0]}
+            id='event-template-tabs'
+            onSelect={(category) => this.updateEventTemplateCategory(category)}
+          >
+            {sorted_categories.map((template_category) => {
+              return (
+                <Tab eventKey={template_category} title={template_category} key={template_category}>
+                  {this.props.event_templates
+                    .filter(
+                      (event_template) =>
+                        this.isTemplateVisible(event_template) && event_template.template_categories.includes(template_category)
+                    )
+                    .map((event_template) => {
+                      return (
+                        <Button
+                          className='btn-template'
+                          variant={event_template.event_button_color || DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR}
+                          to='#'
+                          key={`template_${event_template.id}`}
+                          onClick={(e) => this.handleEventSubmit(event_template, e)}
+                        >
+                          {event_template.event_name}
+                        </Button>
+                      )
+                    })}
+                </Tab>
+              )
+            })}
+            <Tab eventKey='all' title='All'>
+              {this.props.event_templates
+                .filter((event_template) => this.isTemplateVisible(event_template))
+                .map((event_template) => {
+                  return (
+                    <Button
+                      className='btn-template'
+                      variant={event_template.event_button_color || DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR}
+                      to='#'
+                      key={`template_${event_template.id}`}
+                      onClick={(e) => this.handleEventSubmit(event_template, e)}
+                    >
+                      {event_template.event_name}
+                    </Button>
+                  )
+                })}
+            </Tab>
+          </Tabs>
+        )
+      } else {
+        return this.props.event_templates
+          .filter((event_template) => this.isTemplateVisible(event_template))
+          .map((event_template) => {
+            return (
+              <Button
+                className='btn-template'
+                variant={event_template.event_button_color || DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR}
+                to='#'
+                key={`template_${event_template.id}`}
+                onClick={(e) => this.handleEventSubmit(event_template, e)}
+              >
+                {event_template.event_name}
+              </Button>
+            )
+          })
+      }
     }
   }
 
   render() {
-    if (!this.props.event_templates) {
-      return <div style={this.props.style}>Loading...</div>;
+    if (this.state.fetching) {
+      return <div>Loading event templates...</div>
     }
 
     if (this.props.event_templates.length > 0) {
       return (
         <div style={this.props.style}>
-          <EventTemplateOptionsModal
-            handleUpdateEvent={this.props.updateEvent}
-            handleDeleteEvent={this.props.deleteEvent}
-          />
+          <EventTemplateOptionsModal handleUpdateEvent={this.props.updateEvent} handleDeleteEvent={this.props.deleteEvent} />
           {this.renderEventTemplates()}
         </div>
-      );
+      )
     }
 
-    return <Alert variant="danger">No Event Templates found</Alert>;
+    return <Alert variant='danger'>No Event Templates found</Alert>
   }
 }
 
-function mapStateToProps(state) {
-  return {
-    authenticated: state.auth.authenticated,
-    event_templates: state.event_history.event_templates,
-    event_template_category: state.event_history.event_template_category,
-    roles: state.user.profile.roles,
-  };
+EventTemplateList.propTypes = {
+  authenticated: PropTypes.bool.isRequired,
+  createEvent: PropTypes.func.isRequired,
+  deleteEvent: PropTypes.func.isRequired,
+  event_templates: PropTypes.array.isRequired,
+  fetchEventTemplates: PropTypes.func.isRequired,
+  roles: PropTypes.array,
+  showModal: PropTypes.func.isRequired,
+  style: PropTypes.string,
+  updateEvent: PropTypes.func.isRequired
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(EventTemplateList);
+const mapStateToProps = (state) => {
+  return {
+    authenticated: state.auth.authenticated,
+    event_templates: state.event_template.event_templates,
+    roles: state.user.profile.roles
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(EventTemplateList)

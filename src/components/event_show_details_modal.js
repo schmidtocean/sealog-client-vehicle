@@ -1,248 +1,117 @@
-import React, { Component } from 'react';
-import { compose } from 'redux';
-import { connect } from 'react-redux';
-import { connectModal } from 'redux-modal';
-import PropTypes from 'prop-types';
-import axios from 'axios';
-import Cookies from 'universal-cookie';
-import { Row, Col, Image, Card, Modal } from 'react-bootstrap';
-import ImagePreviewModal from './image_preview_modal';
-import CoordinateFormatCycler from './coord_format_cycler';
+import React, { Component } from 'react'
+import { compose } from 'redux'
+import { connect } from 'react-redux'
+import { connectModal } from 'redux-modal'
+import PropTypes from 'prop-types'
+import { Row, Col, Card, Modal } from 'react-bootstrap'
+import AuxDataCards from './aux_data_cards'
+import EventCommentCard from './event_comment_card'
+import EventOptionsCard from './event_options_card'
+import ImagePreviewModal from './image_preview_modal'
+import ImageryCards from './imagery_cards'
+import { EXCLUDE_AUX_DATA_SOURCES, IMAGES_AUX_DATA_SOURCES, AUX_DATA_SORT_ORDER } from '../client_settings'
+import { get_event_exports, handle_image_file_download } from '../api'
+import * as mapDispatchToProps from '../actions'
 
-import * as mapDispatchToProps from '../actions';
-
-import { API_ROOT_URL } from '../client_config';
-import { getImageUrl, handleMissingImage } from '../utils';
-
-const cookies = new Cookies();
-
-const excludeAuxDataSources = ['vehicleRealtimeFramegrabberData'];
-
-const imageAuxDataSources = ['vehicleRealtimeFramegrabberData'];
-
-const sortAuxDataSourceReference = ['vehicleRealtimeNavData','vesselRealtimeNavData'];
+const excludeAuxDataSources = Array.from(new Set([...EXCLUDE_AUX_DATA_SOURCES, ...IMAGES_AUX_DATA_SOURCES]))
 
 class EventShowDetailsModal extends Component {
-
-  constructor (props) {
-    super(props);
+  constructor(props) {
+    super(props)
 
     this.state = { event: {} }
-
-    this.handleImagePreviewModal = this.handleImagePreviewModal.bind(this);
-
+    this.handleImagePreviewModal = this.handleImagePreviewModal.bind(this)
   }
-
-  static propTypes = {
-    event: PropTypes.object,
-    handleHide: PropTypes.func.isRequired
-  };
 
   componentDidMount() {
     this.initEvent()
   }
 
-  componentWillUnmount() {
+  componentDidUpdate(prevProps) {
+    if (prevProps.event !== this.props.event) {
+      if (this.props.event && this.props.event.id) {
+        this.initEvent()
+      } else {
+        this.setState({ event: {} })
+      }
+    }
   }
 
   async initEvent() {
-    try {
-      const response = await axios.get(`${API_ROOT_URL}/api/v1/event_exports/${this.props.event.id}`,
-        {
-          headers: {
-          authorization: cookies.get('token')
-          }
-        }      
-      )
-      this.setState({event: response.data});
-    }
-    catch(error) {
-      console.log(error);
-    }    
+    const event = await get_event_exports({}, this.props.event.id)
+    this.setState({ event })
   }
 
   handleImagePreviewModal(source, filepath) {
     this.props.showModal('imagePreview', { name: source, filepath: filepath })
   }
 
-  renderImage(source, filepath) {
-    return (
-      <Card  className="event-image-data-card" id={`image_${source}`}>
-        <Image fluid onError={handleMissingImage} src={filepath} onClick={ () => this.handleImagePreviewModal(source, filepath)} />
-        <span>{source}</span>
-      </Card>
-    );
-  }
-
-  renderImageryCard() {
-    if(this.props.event && this.state.event.aux_data) { 
-      let frameGrabberData = this.state.event.aux_data.filter(aux_data => imageAuxDataSources.includes(aux_data.data_source))
-      let tmpData = []
-
-      if(frameGrabberData.length > 0) {
-        for (let i = 0; i < frameGrabberData.length; i++) {
-          for (let j = 0; j < frameGrabberData[i].data_array.length; j+=2) {
-      
-            tmpData.push({
-              source: frameGrabberData[i].data_array[j].data_value,
-              filepath: getImageUrl(frameGrabberData[i].data_array[j+1].data_value)
-            })
-          }
-        }
-
-        return (
-          tmpData.map((camera) => {
-            return (
-              <Col className="px-1 pb-2" key={camera.source} xs={12} sm={6} md={6} lg={6}>
-                {this.renderImage(camera.source, camera.filepath)}
-              </Col>
-            );
-          })
-        )
-      }
-    }
-  }
-
-  renderEventOptionsCard() {
-
-    // return null;
-    let return_event_options = this.state.event.event_options.reduce((filtered, event_option, index) => {
-      if(event_option.event_option_name !== 'event_comment') {
-        filtered.push(<div key={`event_option_${index}`}><span className="data-name">{event_option.event_option_name.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}:</span> <span className="float-right" style={{wordWrap:'break-word'}} >{event_option.event_option_value}</span><br/></div>);
-      }
-      return filtered
-    },[])
-
-    return (return_event_options.length > 0)? (
-      <Col className="px-1 pb-2" xs={12} sm={6} md={6} lg={4}>
-        <Card className="event-data-card">
-          <Card.Header>Event Options</Card.Header>
-          <Card.Body>
-            {return_event_options}
-          </Card.Body>
-        </Card>
-      </Col>
-    ) : null
-  }
-
-  renderAuxDataCard() {
-
-    if(this.state.event && this.state.event.aux_data) {
-
-      const aux_data = this.state.event.aux_data.filter((data) => !excludeAuxDataSources.includes(data.data_source))
-
-      aux_data.sort((a, b) => {
-        return (sortAuxDataSourceReference.indexOf(a.data_source) < sortAuxDataSourceReference.indexOf(b.data_source)) ? -1 : 1;
-      });
-
-      let return_aux_data = aux_data.map((aux_data) => {
-        const aux_data_points = aux_data.data_array.map((data, index) => {
-          if (data.data_name === 'latitude' || data.data_name === 'longitude') {
-            return (
-              <CoordinateFormatCycler
-                key={`${aux_data.data_source}_data_point_${index}`}
-                coordinate={data.data_name}
-                name={data.data_name}
-                value={data.data_value}
-                uom={data.data_uom}
-              />
-            );
-          }
-          return (
-            <div key={`${aux_data.data_source}_data_point_${index}`}>
-              <span className="data-name">{data.data_name.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:</span>
-              <span className="float-right" style={{wordWrap:'break-word'}}>{data.data_value} {data.data_uom}</span>
-              <br/>
-            </div>
-          );
-        });
-
-        return (
-          <Col className="px-1 pb-2" key={`${aux_data.data_source}_col`} sm={6} md={6} lg={4}>
-            <Card className="event-data-card" key={`${aux_data.data_source}`}>
-              <Card.Header>{aux_data.data_source.replace(/([A-Z][a-z]+)/g, ' $1').replace(/(CTD|USBL|O2|UVSVX)/g, ' $1').replace(/\_/g, ' ').trim()}</Card.Header>
-              <Card.Body>
-                {aux_data_points}
-              </Card.Body>
-            </Card>
-          </Col>
-        );
-      });
-
-      return return_aux_data;
-    }
-
-    return null;
-  }
-
   render() {
     const { show, event } = this.props
 
-    const event_free_text_card = (this.state.event.event_free_text)? (<Col className="px-1 pb-2" xs={12}><Card className="event-data-card"><Card.Body>Free-form Text: {this.state.event.event_free_text}</Card.Body></Card></Col>) : null;
-    const event_comment = (this.state.event.event_options) ? this.state.event.event_options.find((event_option) => (event_option.event_option_name === 'event_comment' && event_option.event_option_value.length > 0)) : null
+    const event_free_text_card = this.state.event.event_free_text ? (
+      <Col className='event-data-col' md={6} lg={4} xl={3}>
+        <Card className='event-data-card'>
+          <Card.Header className='event-details'>Free-form Text</Card.Header>
+          <Card.Body>{this.state.event.event_free_text}</Card.Body>
+        </Card>
+      </Col>
+    ) : null
 
-    const event_comment_card = (event_comment)?(<Col className="px-1" xs={12}><Card className="event-data-card"><Card.Body>Comment: {event_comment.event_option_value}</Card.Body></Card></Col>) : null;
-    
-    if (event ) {
-      if(this.state.event.event_options) {
-        return (
-          <Modal size="lg" show={show} onHide={this.props.handleHide}>
-              <ImagePreviewModal />
-              <Modal.Header closeButton>
-                <Modal.Title as="h5">Event Details: {this.state.event.event_value}</Modal.Title>
-              </Modal.Header>
+    const image_data_sources = this.state.event.aux_data
+      ? this.state.event.aux_data.filter((aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source))
+      : []
+    const aux_data = this.state.event.aux_data
+      ? this.state.event.aux_data.filter((data) => !excludeAuxDataSources.includes(data.data_source))
+      : []
+    aux_data.sort((a, b) => {
+      return AUX_DATA_SORT_ORDER.indexOf(a.data_source) < AUX_DATA_SORT_ORDER.indexOf(b.data_source) ? -1 : 1
+    })
 
-              <Modal.Body className="px-4">
-                <Row>
-                  <Col className="px-1 pb-2" xs={12}>
-                    <Card className="event-data-card">
-                      <Card.Body>
-                        <span>User: {this.state.event.event_author}</span>
-                        <span className="float-right">Date: {this.state.event.ts}</span>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-                <Row>
-                  {this.renderImageryCard()}
-                  {this.renderAuxDataCard()}
-                  {this.renderEventOptionsCard()}
-                </Row>
-                <Row>
-                  {event_free_text_card}
-                  {event_comment_card}
-                </Row>
-              </Modal.Body>
-          </Modal>
-        );
-      } else {
-        return (
-          <Modal size="lg" show={show} onHide={this.props.handleHide}>
-            <Modal.Header closeButton>
-              <Modal.Title as="h5">Event Details: {this.state.event.event_value}</Modal.Title>
+    if (event) {
+      return (
+        <React.Fragment>
+          <ImagePreviewModal handleDownload={handle_image_file_download} />
+          <Modal size='xl' show={show} onHide={this.props.handleHide}>
+            <Modal.Header className='card-header bg-light d-flex justify-content-between'>
+              {this.state.event.event_value}
+              <span>
+                <i>{this.state.event.event_author}</i> @ {this.state.event.ts}
+              </span>
             </Modal.Header>
-            <Modal.Body>
-              Loading...
+            <Modal.Body className='pt-2 pb-0'>
+              <Row>
+                <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={6} lg={4} xl={3} />
+                <AuxDataCards aux_data={aux_data} md={6} lg={4} xl={3} />
+                <EventOptionsCard event={this.state.event} md={6} lg={4} xl={3} />
+                {event_free_text_card}
+                <EventCommentCard event={this.state.event} md={6} lg={4} xl={3} />
+              </Row>
             </Modal.Body>
           </Modal>
-        );
-      }
-    }
-    else {
-      return null;
+        </React.Fragment>
+      )
+    } else {
+      return null
     }
   }
 }
 
-function mapStateToProps(state) {
+EventShowDetailsModal.propTypes = {
+  event: PropTypes.object,
+  handleHide: PropTypes.func.isRequired,
+  show: PropTypes.bool.isRequired,
+  showModal: PropTypes.func.isRequired
+}
 
+const mapStateToProps = (state) => {
   return {
-    lowering: state.lowering.lowering,
-    roles: state.user.profile.roles,
+    cruise: state.cruise.cruise,
+    roles: state.user.profile.roles
   }
 }
 
 export default compose(
   connect(mapStateToProps, mapDispatchToProps),
-  connectModal({ name: 'eventShowDetails', destroyOnHide: true }) 
+  connectModal({ name: 'eventShowDetails', destroyOnHide: true })
 )(EventShowDetailsModal)

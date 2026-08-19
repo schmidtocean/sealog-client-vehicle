@@ -1,152 +1,171 @@
-import React, {Component} from 'react';
-import { connect } from 'react-redux';
-import { Client } from '@hapi/nes/lib/client';
-import { Link } from 'react-router-dom';
-import prettyBytes from 'pretty-bytes';
-import { WS_ROOT_URL, DISABLE_EVENT_LOGGING } from '../client_config';
-
-import * as mapDispatchToProps from '../actions';
-import SealogInstanceLinks from './sealog_instance_links';
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { Client } from '@hapi/nes/lib/client'
+import { Link } from 'react-router-dom'
+import PropTypes from 'prop-types'
+import prettyBytes from 'pretty-bytes'
+import { Nav, Navbar, NavbarCollapse } from 'react-bootstrap'
+import { get_custom_vars } from '../api'
+import { connectWSClient } from '../utils'
+import { WS_ROOT_URL, DISABLE_EVENT_LOGGING } from '../client_settings'
+import * as mapDispatchToProps from '../actions'
+import SealogInstanceLinks from './sealog_instance_links'
 
 class Footer extends Component {
+  constructor(props) {
+    super(props)
 
-  constructor (props) {
-    super(props);
+    this.trackedCustomVars = ['asnapStatus', 'freeSpaceInBytes', 'freeSpacePercentage']
 
     this.state = {
-      // intervalID: null
-    };
+      asnapStatus: null,
+      freeSpaceInBytes: null,
+      freeSpacePercentage: null,
+      wsConnected: false
+    }
 
-    this.handleASNAPNotification = this.handleASNAPNotification.bind(this);
-    this.client = new Client(`${WS_ROOT_URL}`);
-    this.connectToWS = this.connectToWS.bind(this);
-
+    this.client = new Client(`${WS_ROOT_URL}`)
+    this.client.onConnect = () => this.setState({ wsConnected: true })
+    this.client.onDisconnect = () => this.setState({ wsConnected: false })
+    this.connectToWS = this.connectToWS.bind(this)
   }
 
   componentDidMount() {
-    this.handleASNAPNotification();
+    if (this.props.authenticated && !DISABLE_EVENT_LOGGING) {
+      this.fetchCustomVars()
 
-    if ( !DISABLE_EVENT_LOGGING && this.props.authenticated ) {
-      this.connectToWS();
+      if (!DISABLE_EVENT_LOGGING) {
+        this.connectToWS()
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.authenticated !== this.props.authenticated && this.props.authenticated) {
+      this.fetchCustomVars()
+
+      if (!DISABLE_EVENT_LOGGING) {
+        this.connectToWS()
+      }
     }
   }
 
   componentWillUnmount() {
-    if ( !DISABLE_EVENT_LOGGING && this.props.authenticated ) {
-      this.client.disconnect();
+    if (!DISABLE_EVENT_LOGGING && this.props.authenticated) {
+      this.client.disconnect()
     }
   }
 
   async connectToWS() {
-
-    try {
-      await this.client.connect();
-      // {
-      //   auth: {
-      //     headers: {
-      //       authorization: cookies.get('token')
-      //     }
-      //   }
-      // })
-
-      const updateHandler = () => {
-        this.handleASNAPNotification();
-      };
-
-      this.client.subscribe('/ws/status/updateCustomVars', updateHandler);
-
-    } catch(error) {
-      console.log(error);
-      throw(error);
+    const updateHandler = (update) => {
+      if (this.trackedCustomVars.includes(update.custom_var_name)) {
+        const new_state = {}
+        new_state[update.custom_var_name] = update.custom_var_value
+        this.setState(new_state)
+      }
     }
+
+    await connectWSClient(this.client, {
+      '/ws/status/updateCustomVars': updateHandler
+    })
   }
 
-
-  handleASNAPNotification() {
-    if(this.props.authenticated) {
-      this.props.fetchCustomVars();
+  async fetchCustomVars() {
+    const query = {
+      name: this.trackedCustomVars
     }
+
+    const response = await get_custom_vars(query)
+    const new_state = response.reduce((acc, obj) => {
+      acc[obj.custom_var_name] = obj.custom_var_value
+      return acc
+    }, {})
+
+    this.setState(new_state)
   }
 
-  render () {
+  render() {
+    let freeSpaceStatus = null
+    let asnapStatus = null
+    let wsStatus = null
 
-    let freeSpaceStatus = null;
-    let asnapStatus = null;
-
-    if ( DISABLE_EVENT_LOGGING ) {
-      freeSpaceStatus = null;
-    }
-    else if(this.props.authenticated && this.props.freeSpaceInBytes) {
-      if(parseInt(this.props.freeSpaceInBytes) < 10737418240) {
-        freeSpaceStatus =  (
-          <span className="ml-2">
-            Free Space: <span  className="text-danger">{prettyBytes(parseInt(this.props.freeSpaceInBytes))}</span>
-          </span>
-        );        
-      }
-      else if(parseInt(this.props.freeSpaceInBytes) < 21474836480) {
-        freeSpaceStatus =  (
-          <span className="ml-2">
-            Free Space: <span  className="text-warning">{prettyBytes(parseInt(this.props.freeSpaceInBytes))}</span>
-          </span>
-        );        
-      }
-      else {
-        freeSpaceStatus =  (
-          <span className="ml-2">
-            Free Space: <span  className="text-success">{prettyBytes(parseInt(this.props.freeSpaceInBytes))}</span>
-          </span>
-        );        
-      }
+    if (!DISABLE_EVENT_LOGGING && this.props.authenticated) {
+      const wsStatusStyle = this.state.wsConnected ? 'text-success' : 'text-danger'
+      wsStatus = (
+        <React.Fragment>
+          Server: <span className={wsStatusStyle + ' me-3'}>{this.state.wsConnected ? 'Connected' : 'Disconnected'}</span>
+        </React.Fragment>
+      )
     }
 
-    if ( DISABLE_EVENT_LOGGING ) {
-      asnapStatus = null;
+    if (DISABLE_EVENT_LOGGING) {
+      freeSpaceStatus = null
+    } else if (this.props.authenticated && this.state.freeSpaceInBytes) {
+      let sizeStyle = 'text-danger'
+      if (parseInt(this.state.freeSpacePercentage) < 90) {
+        sizeStyle = 'text-warning'
+      }
+      if (parseInt(this.state.freeSpacePercentage) < 75) {
+        sizeStyle = 'text-success'
+      }
+      freeSpaceStatus = (
+        <React.Fragment>
+          Free Space: <span className={sizeStyle}>{prettyBytes(parseInt(this.state.freeSpaceInBytes || 'Unknown'))}</span>
+        </React.Fragment>
+      )
     }
-    else if(this.props.authenticated && this.props.asnapStatus === "Off") {
-      asnapStatus =  (
-        <span>
-          ASNAP: <span className="text-danger">Off</span>
-        </span>
-      );
-    } else if(this.props.authenticated && this.props.asnapStatus === "On") {
-      asnapStatus =  (
-        <span>
-          ASNAP: <span className="text-success">On</span>
-        </span>
-      );
-    } else if(this.props.authenticated) {
-      asnapStatus =  (
-        <span>
-          ASNAP: <span className="text-warning">Unknown</span>
-        </span>
-      );
+
+    if (!DISABLE_EVENT_LOGGING && this.props.authenticated) {
+      let asnapStatusStyle = 'text-danger'
+      if (this.state.asnapStatus === 'On') {
+        asnapStatusStyle = 'text-success'
+      }
+      asnapStatus = (
+        <React.Fragment>
+          ASNAP: <span className={asnapStatusStyle + ' me-3'}>{this.state.asnapStatus || 'Unknown'}</span>
+        </React.Fragment>
+      )
     }
 
     return (
-      <div className="mt-2 justify-content-center">
-        <SealogInstanceLinks />
-        {asnapStatus}
-        {freeSpaceStatus}
-        <span className="float-right">
-          <Link to="/github" target="_blank">Sealog</Link> is licensed under the <Link to="/license" target="_blank">MIT</Link> public license
-        </span>
-      </div>
-    );
+      <Navbar className='footer' collapseOnSelect expand='sm' variant='dark' fixed='bottom'>
+        <Navbar.Text className='ms-4'>
+          <SealogInstanceLinks />
+          {wsStatus}
+          {asnapStatus}
+          {freeSpaceStatus}
+        </Navbar.Text>
+        <NavbarCollapse id='responsive-navbar-nav' className='justify-content-end'>
+          <Nav className='justify-content-end me-4' style={{ width: '100%' }}>
+            <span>
+              <Link
+                className='text-link text-primary me-1'
+                to={{ pathname: 'https://oceandatatools.github.io/sealog-docs' }}
+                target='_blank'
+              >
+                Sealog
+              </Link>
+              is licensed under the
+              <Link className='text-link text-primary mx-1' to={{ pathname: 'https://opensource.org/license/mit' }} target='_blank'>
+                MIT
+              </Link>
+              public license
+            </span>
+          </Nav>
+        </NavbarCollapse>
+      </Navbar>
+    )
   }
 }
 
-function mapStateToProps(state){
-
-  let asnapStatus = (state.custom_var)? state.custom_var.custom_vars.find(custom_var => custom_var.custom_var_name === "asnapStatus") : null;
-  let freeSpaceInBytes = (state.custom_var)? state.custom_var.custom_vars.find(custom_var => custom_var.custom_var_name === "freeSpaceInBytes") : null;
-
-  return {
-    asnapStatus: (asnapStatus)? asnapStatus.custom_var_value : null,
-    freeSpaceInBytes: (freeSpaceInBytes)? freeSpaceInBytes.custom_var_value : null,
-    authenticated: state.auth.authenticated,
-
-  };
+Footer.propTypes = {
+  authenticated: PropTypes.bool.isRequired
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Footer);
+const mapStateToProps = (state) => {
+  return {
+    authenticated: state.auth.authenticated
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Footer)

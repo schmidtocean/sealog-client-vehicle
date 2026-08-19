@@ -1,20 +1,69 @@
-// Import Custom Bootswatch Mixins and Components
 @import "variables.scss";
 
-// sealog-emp overrides 
+// sealog-emp overrides
 $body-bg: #363636;
 $navbar-dark-brand-color: #FF8800;
+
+$btn-border-radius:   2px;
+$input-border-radius: 2px;
 
 // Import Bootstrap
 @import "~bootstrap/scss/bootstrap.scss";
 
+// Import Custom Bootswatch Mixins and Components
+@import "bootswatch.scss";
+
+
+.form-select {
+  --bs-form-select-bg-img: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%23ddd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/></svg>");
+}
+
 // Import fonts
-@import "~@fontsource/roboto/index.css"; // Weight 400.
+@import "~@fontsource/roboto/400.css"; // Weight 400.
 @import "~@fontsource/roboto/700.css"; // Weight 700.
 
 // Import FontAwesome
-//@import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
-//@import "~@fortawesome/fontawesome-free/scss/solid.scss";
+// @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
+// @import "~@fortawesome/fontawesome-free/scss/solid.scss";
+
+.accordion {
+  --bs-accordion-border-color: #{$gray-600};
+}
+
+.accordion-button {
+  padding: 12px;
+}
+
+.accordion-item {
+  border-color: $gray-600;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: $gray-700;
+  color: var(--bs-accordion-color);
+  border: $gray-600, 4px, solid;
+}
+
+.btn-outline-secondary {
+  border-color: $gray-400;
+  color: $gray-400;
+}
+
+.btn-outline-secondary:disabled {
+  color: $gray-500;
+  border-color: $gray-500;
+}
+
+.btn-outline-secondary:hover {
+  color: $white;
+  border-color: $gray-600;
+  background-color: $gray-600;
+}
+
+.text-link {
+    color: inherit;
+    text-decoration: inherit;
+}
 
 .nav-tabs,
 .nav-pills,
@@ -23,9 +72,9 @@ $navbar-dark-brand-color: #FF8800;
     background-color: transparent;
     color: $primary;
     text-transform: uppercase;
-  
+
     &:hover {
-      background-color: $gray-700;
+      color: $warning;
     }
 
     &.disabled,
@@ -37,6 +86,7 @@ $navbar-dark-brand-color: #FF8800;
     &.active {
       color: $warning;
       background-color: transparent;
+      border: none;
     }
   }
 }
@@ -50,12 +100,14 @@ $navbar-dark-brand-color: #FF8800;
     border-color: black;
   }
 }
-.btn-template {
-  font-size: .85rem;
-}
 
-.cruise-details, .lowering-details {
-  font-size: .75rem;
+button.btn-template {
+  font-size: .85rem;
+  margin-top: .4rem !important;
+  margin-right: .4rem !important;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+  min-width: 70px;
 }
 
 .flex-grow-1 {
@@ -76,13 +128,25 @@ $navbar-dark-brand-color: #FF8800;
   &.collapsed { height: 220px; }
 }
 
-.event-list-item {
-  display: flex;
-  justify-content: space-between;
+.event-header-card {
+  width: 100%;
+  border-color: $secondary;
+  .card-header {
+    padding-left: .5rem !important;
+    padding-right: .5rem !important;
+    padding-bottom: .25rem !important;
+    padding-top: .25rem !important;
+    border-bottom: none;
+  }
+}
+
+.field-stats {
+  padding-left: 10px;
+  margin-bottom: .5rem;
 }
 
 .event-data-card {
-
+  width: 100%;
   border-color: $secondary;
   .card-header {
     padding-left: .5rem !important;
@@ -93,7 +157,10 @@ $navbar-dark-brand-color: #FF8800;
 
   .card-body {
     font-size: .8rem;
-    padding: .5rem;
+    padding-left: .5rem !important;
+    padding-right: .5rem;
+    padding-bottom: .25rem !important;
+    padding-top: .25rem;
 
     .data-name {
       text-transform: capitalize;
@@ -101,17 +168,90 @@ $navbar-dark-brand-color: #FF8800;
   }
 }
 
-.event-image-data-card {
-  border: none;
-  background-color: transparent;
-  text-transform: capitalize;
+.event-data-col {
+  padding-bottom: 0.5rem !important;
+  padding-right: 0.25rem !important;
+  padding-left: 0.25rem !important;
+  display: flex;
 }
 
 .pseudo-link {
   cursor: pointer;
-  }
+}
+
+.event-image-data-card {
+  border-color: $secondary;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.event-image-data-card:hover {
+  opacity: 0.7;
+}
+
+.event-input {
+  border: solid $secondary 1px;
+}
+
+.event-list-item  {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  padding-bottom: 0.125rem !important;
+  padding-top: 0.125rem !important;
+  font-size: .85rem;
+  color: $gray-300
+}
+
+.event-list-item:hover {
+  color: var(--bs-primary);
+}
+
+.event-list-item.active {
+  color: $white;
+}
+
+.event-list-item-summary {
+  width: 100%;
+  cursor: pointer;
+}
+
+tbody {
+  font-size: .85rem;
+}
+
+.table > thead > tr > th {
+  color: $gray-300;
+}
+
+.table > tbody > tr > td {
+  color: $gray-400;
+}
+
+.form-control, .form-control:focus {
+  background-color: #0f0f0f;
+  color: $gray-300;
+}
+
+.form-control:disabled {
+  background-color: $gray-800;
+  color: $gray-400;
+}
+
+.form-control-sm, .form-control.lg {
+  border-radius: 2px;
+}
+
+.form-select, .form-select:focus {
+  background-color: #0f0f0f;
+  color: $gray-300;
+}
+
+// $form-control-lg-border-radius: 2px;
+// $form-control-sm-border-radius: 2px;
+// $input-group-border-radius: 2px;
 
 // Utility class to hide arrow from dropdown
+
 .dropdown.no-arrow {
   .dropdown-toggle::after {
     display: none;
@@ -136,6 +276,59 @@ legend {
   font-size: .9rem;
 }
 
+// Tighen up the dropdown menus
+.dropdown-item {
+  padding: 4px 0px 0px 10px;
+}
+
+// Keep color-select-field dropdown items showing their own variant color
+// (instead of the default grey) when hovered, focused, or selected.
+.color-select-menu .dropdown-item {
+  &:hover,
+  &:focus,
+  &.active {
+    background-color: var(--bs-btn-bg);
+    color: var(--bs-btn-color);
+    filter: brightness(0.9);
+  }
+}
+
+.dropdown-header {
+  padding: 0px 0px 0px 10px;
+}
+
+div {
+  .event-details {
+    font-size: .85rem;
+  }
+  .footer {
+    font-size: .85rem;
+    background-color: var(--bs-body-bg);
+  }
+}
+
+div {
+  .modal-header {
+    padding: 10px;
+    font-size: .85rem;
+  }
+}
+
+div {
+  .form-check {
+    margin-bottom: 0;
+  }
+  .form-check-inline {
+    margin-right: 0.5rem;
+  }
+}
+
+div {
+  .event_fitler_form, .cruise_form {
+    padding: .5rem;
+  }
+}
+
 // react-datetime styles
 @import "~react-datetime/css/react-datetime.css";
 
@@ -144,7 +337,6 @@ legend {
 .rdtPicker {
   background: $body-bg;
   border: 1px solid $secondary;
-  color: $white;
 }
 
 .rdtPicker td.rdtDay:hover,
@@ -152,8 +344,8 @@ legend {
 .rdtPicker td.rdtMinute:hover,
 .rdtPicker td.rdtSecond:hover,
 .rdtPicker .rdtTimeToggle:hover {
-  background: $white;
-  color: $body-bg;
+  background: $body-bg;
+  color: $info;
 }
 
 .rdtPicker td.rdtToday:before {
@@ -162,7 +354,7 @@ legend {
 
 .rdtPicker td.rdtActive,
 .rdtPicker td.rdtActive:hover {
-  background-color: $primary;
+  background-color: $info;
   color: $white;
 }
 
@@ -175,8 +367,8 @@ legend {
 }
 
 .rdtPicker thead tr:first-child th:hover {
-  background: $white;
-  color: $body-bg;
+  background: $body-bg;
+  color: $info;
 }
 
 .rdtPicker tfoot {
@@ -185,8 +377,8 @@ legend {
 
 td.rdtMonth:hover,
 td.rdtYear:hover {
-  background: $white;
-  color: $body-bg;
+  background: $body-bg;
+  color: $info;
 }
 
 .rdtPicker th {
@@ -194,6 +386,12 @@ td.rdtYear:hover {
 }
 
 .rdtCounter .rdtBtn:hover {
-  background: $white;
-  color: $body-bg;
+  background: $body-bg;
+  color: $info;
 }
+
+.clickable {
+  cursor: pointer;
+}
+
+
