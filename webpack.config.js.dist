@@ -112,16 +112,14 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       title: HEADER_TITLE,
-      template: './src/assets/index.html'
+      template: './src/assets/index.html',
+      favicon: './src/assets/images/favicon.ico'
     }),
     new MiniCssExtractPlugin({
       filename: 'style/[name].[contenthash].css'
     }),
     new CopyPlugin({
-      patterns: [
-        { from: path.resolve(__dirname, 'src/assets/images/favicon.ico'), to: 'favicon.ico', noErrorOnMissing: true },
-        { from: path.resolve(__dirname, 'src/assets/images/'), to: 'images' }
-      ]
+      patterns: [{ from: path.resolve(__dirname, 'src/assets/images/'), to: 'images' }]
     })
   ],
   performance: {

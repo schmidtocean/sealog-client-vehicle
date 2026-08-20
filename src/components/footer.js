@@ -9,7 +9,7 @@ import { get_custom_vars } from '../api'
 import { connectWSClient } from '../utils'
 import { WS_ROOT_URL, DISABLE_EVENT_LOGGING } from '../client_settings'
 import * as mapDispatchToProps from '../actions'
-import SealogInstanceLinks from './sealog_instance_links'
+import InstanceLink from './instance_link'
 
 class Footer extends Component {
   constructor(props) {
@@ -129,8 +129,8 @@ class Footer extends Component {
 
     return (
       <Navbar className='footer' collapseOnSelect expand='sm' variant='dark' fixed='bottom'>
+        <InstanceLink placement='left' instance='sealog-sub' />
         <Navbar.Text className='ms-4'>
-          <SealogInstanceLinks />
           {wsStatus}
           {asnapStatus}
           {freeSpaceStatus}
@@ -153,6 +153,7 @@ class Footer extends Component {
             </span>
           </Nav>
         </NavbarCollapse>
+        <InstanceLink placement='right' instance='sealog-fkt' />
       </Navbar>
     )
   }

@@ -328,7 +328,13 @@ class EventHistory extends Component {
     ) : null
 
     const image_data_sources = this.state.event.aux_data
-      ? this.state.event.aux_data.filter((aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source))
+      ? this.state.event.aux_data.filter(
+          (aux_data) => IMAGES_AUX_DATA_SOURCES.includes(aux_data.data_source) && aux_data.data_source !== 'eventFileAttachments'
+        )
+      : []
+
+    const attachment_image_data_sources = this.state.event.aux_data
+      ? this.state.event.aux_data.filter((aux_data) => aux_data.data_source === 'eventFileAttachments')
       : []
 
     const aux_data = this.state.event.aux_data
@@ -356,7 +362,8 @@ class EventHistory extends Component {
         (image_data_sources.length || aux_data.length || event_free_text_card || this.state.event.event_options) ? (
           <Card.Body className='pt-2 pb-1'>
             <Row>
-              <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={4} lg={3} />
+              <ImageryCards image_data_sources={image_data_sources} onClick={this.handleImagePreviewModal} md={6} lg={6} xl={6} />
+              <ImageryCards image_data_sources={attachment_image_data_sources} onClick={this.handleImagePreviewModal} md={4} lg={3} />
               <AuxDataCards aux_data={aux_data} md={4} lg={3} />
               <EventOptionsCard event={this.state.event} md={4} lg={3} />
               {event_free_text_card}

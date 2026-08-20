@@ -69,7 +69,9 @@ class GalleryTab extends Component {
   renderImage(source, filepath, onclickFunc = null) {
     return (
       <Card className='event-image-data-card' id={`image_${source}`}>
-        <Image fluid onClick={onclickFunc} onError={handleMissingImage} src={getImageUrl(filepath)} />
+        <div className='event-image-16-9'>
+          <Image onClick={onclickFunc} onError={handleMissingImage} src={getImageUrl(filepath)} />
+        </div>
       </Card>
     )
   }
