@@ -49,7 +49,7 @@ const MAIN_SCREEN_TXT =
   'Please select a cruise from the list below.  Once a cruise is selected please select a deployment from the list of deployments associated with that cruise that appear at the bottom of the cruise information panel.  Selecting a deployment will open the deployment information panel.  At the bottom of the cruise information panel there will be links for proceeding to the deployment replay section, the deployment review section and the deployment gallery section of Sealog. If at any time you wish to return to this page please click the "Review Cruises/Deployments" text in upper navigation bar.'
 
 // Text displayed on the left side of the title bar
-const HEADER_TITLE = `Sealog v${Pkg.version} - Empress`
+const HEADER_TITLE = `Sealog v${Pkg.version} for `
 
 // Default vessel used when created new cruises
 const DEFAULT_VESSEL = 'R/V Falkor (too)'

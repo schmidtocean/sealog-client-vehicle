@@ -2,7 +2,8 @@
 
 // sealog-emp overrides
 $body-bg: #363636;
-$navbar-dark-brand-color: #FF8800;
+$navbar-dark-brand-color: $warning;
+$navbar-dark-brand-hover-color: $warning;
 
 $btn-border-radius:   2px;
 $input-border-radius: 2px;
