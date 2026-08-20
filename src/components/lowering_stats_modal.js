@@ -16,7 +16,7 @@ import { renderAlert, renderMessage } from './form_elements'
 import { highchartsTheme } from '../utils'
 import LoweringStatsForm from './lowering_stats_form'
 import { DEFAULT_LOCATION, TILE_LAYERS } from '../map_tilelayers'
-import { START_MILESTONE, STOP_MILESTONE } from '../milestones'
+import { START_MILESTONE, STOP_MILESTONE, ABORT_MILESTONE, MILESTONES } from '../milestones'
 import { POSITION_DATASOURCES } from '../client_settings'
 import { get_event_exports_by_lowering } from '../api'
 import * as mapDispatchToProps from '../actions'
@@ -33,17 +33,6 @@ const { BaseLayer } = LayersControl
 const MILESTONE_OPTION_NAME = 'milestone'
 const LOWERING_START_MILESTONE = 'start_ts'
 const LOWERING_STOP_MILESTONE = 'stop_ts'
-
-// Older event templates used these fixed milestone names. When a currently
-// configured event template supplies one of the listed replacement values,
-// the legacy stored milestone is treated as superseded and hidden so it
-// isn't shown twice.
-const LEGACY_MILESTONE_REPLACEMENTS = {
-  lowering_descending: ['Descent Initiated', 'Initial Descent'],
-  lowering_on_bottom: ['Reached Survey Depth', 'At Depth'],
-  lowering_off_bottom: ['Leaving Survey Depth'],
-  lowering_on_surface: ['Vehicle on Surface']
-}
 
 class LoweringStatsModal extends Component {
   constructor(props) {
@@ -145,7 +134,6 @@ class LoweringStatsModal extends Component {
   }
 
   componentDidMount() {
-    this.props.fetchEventTemplates()
     this.initEvents(this.props.lowering.id)
   }
 
@@ -156,17 +144,6 @@ class LoweringStatsModal extends Component {
 
     if (this.state.milestone_to_edit !== prevState.milestone_to_edit) {
       this.setPlotLines()
-    }
-
-    if (this.props.event_templates !== prevProps.event_templates && this.state.posDataSource) {
-      this.setState((prevState) => {
-        return {
-          depthChartOptions: {
-            ...prevState.depthChartOptions,
-            series: this.getDepthChartSeries(prevState.posDataSource, prevState.tracklines, prevState.events, prevState.hideASNAP)
-          }
-        }
-      })
     }
   }
 
@@ -190,87 +167,18 @@ class LoweringStatsModal extends Component {
     }
   }
 
-  getMilestoneKey(template) {
-    if (!template.event_options) {
-      return null
-    }
-
-    const milestoneOption = template.event_options.find((option) => option.event_option_name === MILESTONE_OPTION_NAME)
-
-    if (!milestoneOption) {
-      return null
-    }
-
-    if (milestoneOption.event_option_default_value) {
-      return milestoneOption.event_option_default_value
-    }
-
-    if (Array.isArray(milestoneOption.event_option_values) && milestoneOption.event_option_values.length === 1) {
-      return milestoneOption.event_option_values[0]
-    }
-
-    return null
-  }
-
-  getMilestoneTemplates(props = this.props) {
-    const event_templates = props.event_templates || []
-    const seen = new Set()
-
-    return event_templates.reduce((milestones, template) => {
-      if (template.disabled) {
-        return milestones
-      }
-
-      const key = this.getMilestoneKey(template)
-      if (!key || seen.has(key)) {
-        return milestones
-      }
-
-      seen.add(key)
-      milestones.push({
-        key,
-        label: key
-      })
-
-      return milestones
-    }, [])
-  }
-
-  formatMilestoneLabel(key) {
-    return key
-      .replace(/^lowering_/, '')
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+  getMilestoneItems() {
+    return [
+      { key: LOWERING_START_MILESTONE, label: START_MILESTONE.label },
+      ...MILESTONES.map((milestone) => ({ key: milestone.name, label: milestone.label })),
+      { key: LOWERING_STOP_MILESTONE, label: STOP_MILESTONE.label },
+      { key: ABORT_MILESTONE.name, label: ABORT_MILESTONE.label }
+    ]
   }
 
   getMilestoneLabel(key) {
     const milestone = this.getMilestoneItems().find((item) => item.key === key)
-    return milestone ? milestone.label : this.formatMilestoneLabel(key)
-  }
-
-  hasReplacementMilestone(key, displayedKeys) {
-    const replacementKeys = LEGACY_MILESTONE_REPLACEMENTS[key] || []
-
-    return replacementKeys.some((replacementKey) => displayedKeys.has(replacementKey))
-  }
-
-  getMilestoneItems() {
-    const items = [{ key: LOWERING_START_MILESTONE, label: START_MILESTONE.label }, ...this.getMilestoneTemplates()]
-    const displayedKeys = new Set(items.map((item) => item.key))
-
-    Object.keys(this.state.milestones).forEach((key) => {
-      if (key !== LOWERING_START_MILESTONE && key !== LOWERING_STOP_MILESTONE && !displayedKeys.has(key)) {
-        if (!this.hasReplacementMilestone(key, displayedKeys)) {
-          items.push({ key, label: this.formatMilestoneLabel(key) })
-        }
-        displayedKeys.add(key)
-      }
-    })
-
-    items.push({ key: LOWERING_STOP_MILESTONE, label: STOP_MILESTONE.label })
-
-    return items
+    return milestone ? milestone.label : key
   }
 
   renderMilestoneItems() {
@@ -842,8 +750,6 @@ class LoweringStatsModal extends Component {
 
 LoweringStatsModal.propTypes = {
   errorMessage: PropTypes.string,
-  event_templates: PropTypes.array,
-  fetchEventTemplates: PropTypes.func.isRequired,
   handleHide: PropTypes.func.isRequired,
   initLowering: PropTypes.func.isRequired,
   lowering: PropTypes.object,
@@ -855,7 +761,6 @@ LoweringStatsModal.propTypes = {
 const mapStateToProps = (state) => {
   return {
     lowering: state.lowering.lowering,
-    event_templates: state.event_template.event_templates,
     errorMessage: state.lowering.lowering_error,
     message: state.lowering.lowering_message
   }
