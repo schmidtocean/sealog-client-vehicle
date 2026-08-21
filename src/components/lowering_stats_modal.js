@@ -211,7 +211,11 @@ class LoweringStatsModal extends Component {
   }
 
   getEventMilestone(event) {
-    return event.event_options ? event.event_options.find((option) => option.event_option_name === MILESTONE_OPTION_NAME) : null
+    if (event.event_value !== 'VEHICLE' || !event.event_options) {
+      return null
+    }
+
+    return event.event_options.find((option) => option.event_option_name === MILESTONE_OPTION_NAME)
   }
 
   getNearestDepth(depthData, targetTS) {
@@ -229,12 +233,10 @@ class LoweringStatsModal extends Component {
       return []
     }
 
-    const milestoneValues = new Set(this.getMilestoneItems().map((milestone) => milestone.key))
-
     return events.reduce((milestoneData, event) => {
       const milestone = this.getEventMilestone(event)
 
-      if (!milestone || !milestoneValues.has(milestone.event_option_value)) {
+      if (!milestone) {
         return milestoneData
       }
 
