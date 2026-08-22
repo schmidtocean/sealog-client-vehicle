@@ -1,9 +1,9 @@
 const START_MILESTONE = {
-  label: 'Off Deck'
+  label: 'Pre-dive'
 }
 
 const STOP_MILESTONE = {
-  label: 'On Deck'
+  label: 'Mission Key Inserted'
 }
 
 const ABORT_MILESTONE = {
@@ -13,20 +13,48 @@ const ABORT_MILESTONE = {
 
 const MILESTONES = [
   {
+    name: 'lowering_deployment',
+    label: 'Deployment'
+  },
+  {
+    name: 'lowering_key_pulled',
+    label: 'Mission Key Pulled'
+  },
+  {
+    name: 'lowering_in_water',
+    label: 'In Water'
+  },
+  {
+    name: 'lowering_descent_initiated',
+    label: 'Descent Initiated'
+  },
+  {
     name: 'lowering_descending',
     label: 'Descending'
   },
   {
     name: 'lowering_on_bottom',
-    label: 'On Bottom'
+    label: 'Reached Survey Depth'
+  },
+  {
+    name: 'lowering_ascent_initiated',
+    label: 'Ascent Initiated'
   },
   {
     name: 'lowering_off_bottom',
-    label: 'Off Bottom'
+    label: 'Leaving Survey Depth'
   },
   {
     name: 'lowering_on_surface',
-    label: 'On Surface'
+    label: 'Vehicle on Surface'
+  },
+  {
+    name: 'lowering_recovery',
+    label: 'Recovery'
+  },
+  {
+    name: 'lowering_out_of_water',
+    label: 'Out of Water'
   }
 ]
 
