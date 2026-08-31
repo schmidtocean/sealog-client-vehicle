@@ -7,6 +7,7 @@ import { Client } from '@hapi/nes/lib/client'
 import { connectWSClient } from '../utils'
 import cookies from '../cookies'
 import { WS_ROOT_URL, CATEGORY_SORT_ORDER, DEFAULT_EVENT_TEMPLATE_BUTTON_COLOR } from '../client_settings'
+import { ADMIN, POWER_LOGGER } from '../user_role_options'
 import * as mapDispatchToProps from '../actions'
 
 const sortCategories = (category_list) => {
@@ -124,11 +125,21 @@ class EventTemplateList extends Component {
     cookies.set('category', category)
   }
 
+  isPowerLogger() {
+    return this.props.roles && (this.props.roles.includes(ADMIN) || this.props.roles.includes(POWER_LOGGER))
+  }
+
+  isTemplateVisible(event_template) {
+    const notDisabled = typeof event_template.disabled === 'undefined' || !event_template.disabled
+    const accessAllowed = !event_template.admin_only || this.isPowerLogger()
+    return notDisabled && accessAllowed
+  }
+
   renderEventTemplates() {
     const template_categories = [
       ...new Set(
         this.props.event_templates.reduce((flat, event_template) => {
-          if (typeof event_template.disabled === 'undefined' || !event_template.disabled) {
+          if (this.isTemplateVisible(event_template)) {
             return flat.concat(event_template.template_categories)
           }
           return flat
@@ -155,8 +166,7 @@ class EventTemplateList extends Component {
                   {this.props.event_templates
                     .filter(
                       (event_template) =>
-                        (typeof event_template.disabled === 'undefined' || !event_template.disabled) &&
-                        event_template.template_categories.includes(template_category)
+                        this.isTemplateVisible(event_template) && event_template.template_categories.includes(template_category)
                     )
                     .map((event_template) => {
                       return (
@@ -176,7 +186,7 @@ class EventTemplateList extends Component {
             })}
             <Tab eventKey='all' title='All'>
               {this.props.event_templates
-                .filter((event_template) => typeof event_template.disabled === 'undefined' || !event_template.disabled)
+                .filter((event_template) => this.isTemplateVisible(event_template))
                 .map((event_template) => {
                   return (
                     <Button
@@ -195,7 +205,7 @@ class EventTemplateList extends Component {
         )
       } else {
         return this.props.event_templates
-          .filter((event_template) => typeof event_template.disabled === 'undefined' || !event_template.disabled)
+          .filter((event_template) => this.isTemplateVisible(event_template))
           .map((event_template) => {
             return (
               <Button
@@ -237,6 +247,7 @@ EventTemplateList.propTypes = {
   deleteEvent: PropTypes.func.isRequired,
   event_templates: PropTypes.array.isRequired,
   fetchEventTemplates: PropTypes.func.isRequired,
+  roles: PropTypes.array,
   showModal: PropTypes.func.isRequired,
   style: PropTypes.string,
   updateEvent: PropTypes.func.isRequired
@@ -245,7 +256,8 @@ EventTemplateList.propTypes = {
 const mapStateToProps = (state) => {
   return {
     authenticated: state.auth.authenticated,
-    event_templates: state.event_template.event_templates
+    event_templates: state.event_template.event_templates,
+    roles: state.user.profile.roles
   }
 }
 
