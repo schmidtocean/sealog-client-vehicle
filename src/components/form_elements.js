@@ -47,7 +47,7 @@ export const renderTextField = ({
 
   const sanitizedInput = {
     ...input,
-    onChange: (event) => input.onChange(sanitize(event.target.value))
+    onChange: (event) => input.onChange(type === 'password' ? event.target.value : sanitize(event.target.value))
   }
 
   return (
