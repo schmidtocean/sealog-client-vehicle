@@ -136,6 +136,7 @@ class EventHistory extends Component {
       '/ws/status/deleteEvents': updateHandler,
       '/ws/status/newEventAuxData': updateAuxDataHandler,
       '/ws/status/updateEventAuxData': updateAuxDataHandler,
+      '/ws/status/deleteEventAuxData': updateAuxDataHandler,
       '/ws/status/updateCustomVars': cameraStatusHandler
     })
   }
