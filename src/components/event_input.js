@@ -4,7 +4,14 @@ import { connect } from 'react-redux'
 import { reduxForm, Field, reset } from 'redux-form'
 import { Button, Form, InputGroup } from 'react-bootstrap'
 import PropTypes from 'prop-types'
+import DOMPurify from 'dompurify'
 import * as mapDispatchToProps from '../actions'
+
+// This will strip all HTML tags from the input.
+const sanitizeInput = (value) => {
+  // Return the sanitized value, or the original value if it's empty/falsy
+  return value ? DOMPurify.sanitize(value, { USE_PROFILES: { html: false } }) : value
+}
 
 class EventInput extends Component {
   constructor(props) {
@@ -21,7 +28,14 @@ class EventInput extends Component {
     return (
       <Form className={this.props.className} onSubmit={handleSubmit(this.handleFormSubmit.bind(this))}>
         <InputGroup>
-          <Field name='event_free_text' component='input' type='text' placeholder='Type new event' className='form-control' />
+          <Field
+            name='event_free_text'
+            component='input'
+            type='text'
+            placeholder='Type new event'
+            className='form-control'
+            normalize={sanitizeInput}
+          />
           <Button type='submit' disabled={submitting || pristine}>
             Submit
           </Button>

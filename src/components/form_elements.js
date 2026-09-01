@@ -1,10 +1,15 @@
 import React from 'react'
 import { Alert, Col, Dropdown, Form, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Datetime from 'react-datetime'
+import DOMPurify from 'dompurify'
 import moment from 'moment'
 
 export const dateFormat = 'YYYY-MM-DD'
 export const timeFormat = 'HH:mm:ss'
+
+const sanitize = (value) => {
+  return value ? DOMPurify.sanitize(value, { USE_PROFILES: { html: false } }) : value
+}
 
 export const renderStaticTextField = ({ input, label, xs = 12, sm = 12, md = 12, lg = 12 }) => {
   const labelComponent = label ? <Form.Label>{label}</Form.Label> : null
@@ -40,10 +45,21 @@ export const renderTextField = ({
   ) : null
   input.value = typeof input.value === 'object' ? input.value.join(', ') : input.value
 
+  const sanitizedInput = {
+    ...input,
+    onChange: (event) => input.onChange(sanitize(event.target.value))
+  }
+
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg} className={className}>
       {labelComponent}
-      <Form.Control type={type} {...input} placeholder={placeholder} isInvalid={touched && (warning || error)} disabled={disabled} />
+      <Form.Control
+        type={type}
+        {...sanitizedInput}
+        placeholder={placeholder}
+        isInvalid={touched && (warning || error)}
+        disabled={disabled}
+      />
       <Form.Control.Feedback className={warning ? 'text-warning' : ''} type='invalid'>
         {error}
         {warning}
@@ -69,13 +85,25 @@ export const renderTextArea = ({
   let requiredField = required ? <span className='text-danger'> *</span> : ''
   input.value = typeof input.value === 'object' ? input.value.join(', ') : input.value
 
+  const sanitizedInput = {
+    ...input,
+    onChange: (event) => input.onChange(sanitize(event.target.value))
+  }
+
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg} className={className}>
       <Form.Label>
         {label}
         {requiredField}
       </Form.Label>
-      <Form.Control as='textarea' {...input} placeholder={placeholder} isInvalid={touched && error} disabled={disabled} rows={rows} />
+      <Form.Control
+        as='textarea'
+        {...sanitizedInput}
+        placeholder={placeholder}
+        isInvalid={touched && error}
+        disabled={disabled}
+        rows={rows}
+      />
       <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
     </Form.Group>
   )
