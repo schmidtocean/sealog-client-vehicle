@@ -94,9 +94,6 @@ class GalleryTab extends Component {
   render() {
     return (
       <React.Fragment>
-        <Row key={`${this.props.imagesSource}_images`} tabIndex='-1'>
-          {this.renderGallery(this.props.imagesSource, this.props.imagesData)}
-        </Row>
         <Row key={`${this.props.imagesSource}_images_pagination`}>
           <CustomPagination
             className='mt-2'
@@ -105,6 +102,9 @@ class GalleryTab extends Component {
             pageSelectFunc={this.handlePageSelect}
             maxPerPage={this.props.maxImagesPerPage}
           />
+        </Row>
+        <Row key={`${this.props.imagesSource}_images`} tabIndex='-1'>
+          {this.renderGallery(this.props.imagesSource, this.props.imagesData)}
         </Row>
       </React.Fragment>
     )
