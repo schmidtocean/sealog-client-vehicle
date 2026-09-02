@@ -12,12 +12,12 @@ const sanitize = (value) => {
 }
 
 export const renderStaticTextField = ({ input, label, xs = 12, sm = 12, md = 12, lg = 12 }) => {
-  const labelComponent = label ? <Form.Label>{label}</Form.Label> : null
+  const labelComponent = label ? <Form.Label htmlFor={input.name}>{label}</Form.Label> : null
 
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg}>
       {labelComponent}
-      <Form.Control type='text' {...input} disabled />
+      <Form.Control type='text' {...input} disabled id={input.name} />
     </Form.Group>
   )
 }
@@ -38,7 +38,7 @@ export const renderTextField = ({
 }) => {
   const requiredField = required ? <span className='text-danger'> *</span> : ''
   const labelComponent = label ? (
-    <Form.Label>
+    <Form.Label htmlFor={input.name}>
       {label}
       {requiredField}
     </Form.Label>
@@ -59,6 +59,7 @@ export const renderTextField = ({
         placeholder={placeholder}
         isInvalid={touched && (warning || error)}
         disabled={disabled}
+        id={input.name}
       />
       <Form.Control.Feedback className={warning ? 'text-warning' : ''} type='invalid'>
         {error}
@@ -92,7 +93,7 @@ export const renderTextArea = ({
 
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg} className={className}>
-      <Form.Label>
+      <Form.Label htmlFor={input.name}>
         {label}
         {requiredField}
       </Form.Label>
@@ -103,6 +104,7 @@ export const renderTextArea = ({
         isInvalid={touched && error}
         disabled={disabled}
         rows={rows}
+        id={input.name}
       />
       <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
     </Form.Group>
@@ -131,11 +133,11 @@ export const renderSelectField = ({
 
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg} className={className}>
-      <Form.Label>
+      <Form.Label htmlFor={input.name}>
         {label}
         {requiredField}
       </Form.Label>
-      <Form.Select {...input} isInvalid={touched && error} disabled={disabled}>
+      <Form.Select {...input} isInvalid={touched && error} disabled={disabled} id={input.name}>
         {addDefaultOption ? defaultOption : null}
         {optionList}
       </Form.Select>
