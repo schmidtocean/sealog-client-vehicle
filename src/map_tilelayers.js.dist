@@ -6,8 +6,7 @@ export const TILE_LAYERS = [
     name: 'Carto Dark',
     attribution:
       '&copy <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy <a href="https://carto.com/about-carto/">dark_all</a>',
-    url: '  https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-    default: true
+    url: '  https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
   },
   {
     name: 'Carto Voyager',
@@ -21,7 +20,8 @@ export const TILE_LAYERS = [
     url: 'https://www.gmrt.org/services/mapserver/wms_merc?map=/public/mgg/web/gmrt.marine-geo.org/htdocs/services/map/wms_merc.map&',
     attribution: '&copy 2023 <a href="http://gmrt.marine-geo.org" target="_blank" rel="noopener">GMRT</a>',
     layers: 'topo',
-    transparent: false
+    transparent: false,
+    default: true
   }
 ]
 
