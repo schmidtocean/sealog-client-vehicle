@@ -17,7 +17,9 @@ export const renderStaticTextField = ({ input, label, xs = 12, sm = 12, md = 12,
   return (
     <Form.Group as={Col} xs={xs} sm={sm} md={md} lg={lg}>
       {labelComponent}
-      <Form.Control type='text' {...input} disabled id={input.name} />
+      <Form.Control as='output' id={input.name} className='form-static-text'>
+        {input.value}
+      </Form.Control>
     </Form.Group>
   )
 }
