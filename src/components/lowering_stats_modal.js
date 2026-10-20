@@ -13,7 +13,7 @@ import HighchartsReact from 'highcharts-react-official'
 import moment from 'moment'
 import { Button, Row, Col, Form, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import { renderAlert, renderMessage } from './form_elements'
-import { highchartsTheme } from '../utils'
+import { getMilestone, highchartsTheme, setMilestone } from '../utils'
 import LoweringStatsForm from './lowering_stats_form'
 import { DEFAULT_LOCATION, TILE_LAYERS } from '../map_tilelayers'
 import { START_MILESTONE, STOP_MILESTONE, ABORT_MILESTONE, MILESTONES } from '../milestones'
@@ -160,11 +160,19 @@ class LoweringStatsModal extends Component {
   }
 
   getInitialMilestones(props = this.props) {
-    return {
+    const saved = this.getSavedMilestones(props)
+    const milestones = {
       [LOWERING_START_MILESTONE]: props.lowering.start_ts,
-      ...this.getSavedMilestones(props),
+      ...saved,
       [LOWERING_STOP_MILESTONE]: props.lowering.stop_ts
     }
+
+    // Older records may only have the milestone name, in any case.
+    this.getMilestoneItems().forEach((item) => {
+      if (!milestones[item.key]) milestones[item.key] = getMilestone(saved, item.label) || milestones[item.key]
+    })
+
+    return milestones
   }
 
   getMilestoneItems() {
@@ -441,7 +449,9 @@ class LoweringStatsModal extends Component {
   handleClick() {
     if (this.state.milestone_to_edit && this.state.event && this.state.event.ts) {
       this.setState((prevState) => {
-        return { touched: true, milestones: { ...prevState.milestones, [prevState.milestone_to_edit]: prevState.event.ts } }
+        const milestones = { ...prevState.milestones, [prevState.milestone_to_edit]: prevState.event.ts }
+        setMilestone(milestones, this.getMilestoneLabel(prevState.milestone_to_edit), prevState.event.ts)
+        return { touched: true, milestones }
       })
       this.setMilestoneToEdit()
     }

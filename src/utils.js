@@ -23,6 +23,25 @@ export const toTitlecase = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+// Milestone names are matched in any case and written in sentence case, like auto_actions.
+const milestoneKey = (name) => String(name).trim().toLowerCase()
+
+export const toSentenceCase = (str) => {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
+export const getMilestone = (milestones, name) => {
+  const key = Object.keys(milestones || {}).find((key) => milestoneKey(key) === milestoneKey(name))
+  return key ? milestones[key] : undefined
+}
+
+export const setMilestone = (milestones, name, value) => {
+  Object.keys(milestones)
+    .filter((key) => milestoneKey(key) === milestoneKey(name))
+    .forEach((key) => delete milestones[key])
+  milestones[toSentenceCase(name.trim())] = value
+}
+
 // Resolves the startTS constraint used to scope event queries to the current cruise for non-admin users.
 // Returns undefined if roles are not yet available (caller should abort).
 // Returns null if the user is an admin (no startTS constraint needed).

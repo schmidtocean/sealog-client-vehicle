@@ -6,18 +6,20 @@ import PropTypes from 'prop-types'
 import { Button, Table, Modal } from 'react-bootstrap'
 import { connectModal } from 'redux-modal'
 import { API_ROOT_URL, CUSTOM_LOWERING_NAME } from '../client_settings'
+import { getMilestone } from '../utils'
 
 let fileDownload = require('js-file-download')
 
 const cookies = new Cookies()
-const DECK_START_MILESTONES = ['In water']
-const DECK_STOP_MILESTONES = ['Out of water']
-const DEPLOYMENT_START_MILESTONES = ['Deployment']
-const DEPLOYMENT_STOP_MILESTONES = ['Descent Initiated', 'Initial Descent', 'lowering_descending']
-const SURVEY_DEPTH_START_MILESTONES = ['Reached Survey Depth', 'At Depth', 'lowering_on_bottom']
-const SURVEY_DEPTH_STOP_MILESTONES = ['Leaving Survey Depth', 'lowering_off_bottom']
-const SURFACE_MILESTONES = ['Vehicle on Surface', 'lowering_on_surface']
-const RECOVERY_STOP_MILESTONES = ['Mission Key Inserted']
+// lowering_* keys come first: the lowering stats form edits them, matching the report builder.
+const DECK_START_MILESTONES = ['lowering_in_water', 'In water']
+const DECK_STOP_MILESTONES = ['lowering_out_of_water', 'Out of water']
+const DEPLOYMENT_START_MILESTONES = ['lowering_deployment', 'Deployment']
+const DEPLOYMENT_STOP_MILESTONES = ['lowering_descent_initiated', 'Descent initiated', 'Initial descent', 'lowering_descending']
+const SURVEY_DEPTH_START_MILESTONES = ['lowering_on_bottom', 'Reached survey depth', 'At depth']
+const SURVEY_DEPTH_STOP_MILESTONES = ['lowering_off_bottom', 'Leaving survey depth']
+const SURFACE_MILESTONES = ['lowering_on_surface', 'Vehicle on surface']
+const RECOVERY_STOP_MILESTONES = ['Mission key inserted']
 const STAGE_DEFINITIONS = [
   { label: 'Deck to Deck', start: DECK_START_MILESTONES, startFallback: 'start_ts', stop: DECK_STOP_MILESTONES, stopFallback: 'stop_ts' },
   { label: 'Deployment', start: DEPLOYMENT_START_MILESTONES, stop: DEPLOYMENT_STOP_MILESTONES },
@@ -91,14 +93,14 @@ class CruiseMetricsModal extends Component {
   getMilestoneDate(lowering, milestoneNames) {
     const milestones =
       lowering.lowering_additional_meta && lowering.lowering_additional_meta.milestones ? lowering.lowering_additional_meta.milestones : {}
-    const milestoneName = milestoneNames.find((name) => milestones[name])
+    const milestoneName = milestoneNames.find((name) => getMilestone(milestones, name))
 
     if (!milestoneName) {
       return null
     }
 
     try {
-      return moment.utc(milestones[milestoneName])
+      return moment.utc(getMilestone(milestones, milestoneName))
     } catch (err) {
       console.error(err)
     }
@@ -133,7 +135,8 @@ class CruiseMetricsModal extends Component {
       stats.on_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_START_MILESTONES)
       stats.off_bottom_dt = this.getMilestoneDate(lowering, SURVEY_DEPTH_STOP_MILESTONES)
       stats.on_surface_dt = this.getMilestoneDate(lowering, SURFACE_MILESTONES)
-      stats.mission_key_inserted_dt = this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES)
+      stats.mission_key_inserted_dt =
+        this.getMilestoneDate(lowering, RECOVERY_STOP_MILESTONES) || (lowering.stop_ts ? moment.utc(lowering.stop_ts) : null)
 
       if (milestoneStart) {
         stats.start_dt = milestoneStart
@@ -370,7 +373,7 @@ class CruiseMetricsModal extends Component {
   }
 
   renderStageBoundary(milestoneNames) {
-    return milestoneNames[0]
+    return milestoneNames.find((name) => !name.startsWith('lowering_'))
   }
 
   renderStageDefinitions() {

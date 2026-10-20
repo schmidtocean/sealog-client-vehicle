@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 import { reduxForm, Field } from 'redux-form'
 import { Button, Col, Form, Row } from 'react-bootstrap'
 import { renderDateTimePicker, renderTextField, dateFormat } from './form_elements'
+import { setMilestone } from '../utils'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import * as mapDispatchToProps from '../actions'
@@ -22,11 +23,16 @@ class LoweringStatsForm extends Component {
   }
 
   handleFormSubmit(formProps) {
-    const milestones = this.props.milestoneItems.reduce((milestones, milestone) => {
-      const value = formProps.milestones && formProps.milestones[milestone.key]
-      milestones[milestone.key] = value && value._isAMomentObject ? value.toISOString() : value || null
-      return milestones
-    }, {})
+    // Keep milestones the form doesn't edit, such as the sentence-case names auto_actions stores.
+    const milestones = this.props.milestoneItems.reduce(
+      (milestones, milestone) => {
+        const value = formProps.milestones && formProps.milestones[milestone.key]
+        milestones[milestone.key] = value && value._isAMomentObject ? value.toISOString() : value || null
+        setMilestone(milestones, milestone.label, milestones[milestone.key])
+        return milestones
+      },
+      { ...this.props.milestones }
+    )
 
     if (
       (formProps.stats.bounding_box.bbox_north == null || formProps.stats.bounding_box.bbox_north == '') &&
@@ -173,6 +179,7 @@ LoweringStatsForm.propTypes = {
   handleSubmit: PropTypes.func.isRequired,
   lowering: PropTypes.object.isRequired,
   milestoneItems: PropTypes.array.isRequired,
+  milestones: PropTypes.object,
   pristine: PropTypes.bool.isRequired,
   roles: PropTypes.array,
   submitting: PropTypes.bool.isRequired,
