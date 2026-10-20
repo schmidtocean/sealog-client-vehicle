@@ -8,7 +8,7 @@ const STOP_MILESTONE = {
 
 const ABORT_MILESTONE = {
   name: 'lowering_aborted',
-  label: 'Aborted'
+  label: 'Dive aborted'
 }
 
 const MILESTONES = [
